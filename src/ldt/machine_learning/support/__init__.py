@@ -1,4 +1,5 @@
 from .inputs import (
+    EvaluationConfig,
     as_bool,
     as_choice,
     as_optional_int,
@@ -10,8 +11,9 @@ from .inputs import (
     normalise_key,
     parse_class_index,
     parse_excluded_estimators,
+    parse_holdout_split,
     parse_metric_keys,
-    parse_validation_split,
+    resolve_evaluation_config,
     resolve_feature_columns,
     resolve_notebook_path,
     resolve_target_column,
@@ -20,11 +22,12 @@ from .inputs import (
 from .runtime_validation import (
     public_estimator_module,
     resolve_estimator_init_kwargs,
-    validate_cv_split_feasibility,
-    validate_one_vs_rest_cv_folds,
+    validate_evaluation_split_feasibility,
+    validate_one_vs_rest_evaluation_splits,
 )
 
 __all__ = [
+    "EvaluationConfig",
     "as_bool",
     "as_choice",
     "as_optional_int",
@@ -36,14 +39,15 @@ __all__ = [
     "normalise_key",
     "parse_class_index",
     "parse_excluded_estimators",
+    "parse_holdout_split",
     "parse_metric_keys",
-    "parse_validation_split",
+    "resolve_evaluation_config",
     "resolve_feature_columns",
     "public_estimator_module",
     "resolve_estimator_init_kwargs",
     "resolve_notebook_path",
     "resolve_target_column",
     "run_with_validation",
-    "validate_cv_split_feasibility",
-    "validate_one_vs_rest_cv_folds",
+    "validate_evaluation_split_feasibility",
+    "validate_one_vs_rest_evaluation_splits",
 ]

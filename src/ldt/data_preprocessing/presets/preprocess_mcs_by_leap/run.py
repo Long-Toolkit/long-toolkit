@@ -50,6 +50,8 @@ def run_preprocess_mcs_by_leap(*, params: Mapping[str, Any]) -> dict[str, Any]:
             "stage_3_summary": result.stage_3_summary,
             "stage_4_summary": result.stage_4_summary,
             "stage_5_summary": result.stage_5_summary,
+            "stage_6_summary": result.stage_6_summary,
+            "stage_7_summary": result.stage_7_summary,
             "audit_files": [
                 {"name": name, "path": str(path.resolve())}
                 for name, path in result.audit_paths

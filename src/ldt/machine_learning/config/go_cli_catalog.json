@@ -45,20 +45,43 @@
             "hint": "Comma-separated metrics (e.g. f1_macro, auroc)."
           },
           {
-            "key": "cv_folds",
-            "label": "Cross-validation folds",
+            "key": "evaluation_strategy",
+            "label": "Evaluation strategy",
+            "type": "enum",
+            "required": true,
+            "default": "cross_validation",
+            "options": [
+              {
+                "label": "Cross-validation",
+                "value": "cross_validation"
+              },
+              {
+                "label": "Holdout",
+                "value": "holdout"
+              }
+            ],
+            "hint": "Choose between stratified k-fold cross-validation and repeated stratified holdout evaluation."
+          },
+          {
+            "key": "n_splits",
+            "label": "Number of splits",
             "type": "int",
             "required": true,
             "default": 10,
-            "min": 2
+            "min": 2,
+            "hint": "For cross-validation, this is the number of folds. For holdout, this is the number of repeated random splits."
           },
           {
-            "key": "validation_split",
-            "label": "Validation split",
+            "key": "holdout_split",
+            "label": "Holdout split",
             "type": "string",
-            "required": false,
-            "default": "auto",
-            "hint": "`auto`, ratio like 80/20, or float in (0,1)."
+            "required": true,
+            "default": "80/20",
+            "hint": "Train/validation ratio like `80/20` or validation fraction like `0.2`.",
+            "when": {
+              "field": "evaluation_strategy",
+              "equals": "holdout"
+            }
           },
           {
             "key": "random_seed",
@@ -266,19 +289,43 @@
             "default": "f1_macro"
           },
           {
-            "key": "cv_folds",
-            "label": "Cross-validation folds",
+            "key": "evaluation_strategy",
+            "label": "Evaluation strategy",
+            "type": "enum",
+            "required": true,
+            "default": "cross_validation",
+            "options": [
+              {
+                "label": "Cross-validation",
+                "value": "cross_validation"
+              },
+              {
+                "label": "Holdout",
+                "value": "holdout"
+              }
+            ],
+            "hint": "Choose between stratified k-fold cross-validation and repeated stratified holdout evaluation."
+          },
+          {
+            "key": "n_splits",
+            "label": "Number of splits",
             "type": "int",
             "required": true,
             "default": 10,
-            "min": 2
+            "min": 2,
+            "hint": "For cross-validation, this is the number of folds. For holdout, this is the number of repeated random splits."
           },
           {
-            "key": "validation_split",
-            "label": "Validation split",
+            "key": "holdout_split",
+            "label": "Holdout split",
             "type": "string",
-            "required": false,
-            "default": "auto"
+            "required": true,
+            "default": "80/20",
+            "hint": "Train/validation ratio like `80/20` or validation fraction like `0.2`.",
+            "when": {
+              "field": "evaluation_strategy",
+              "equals": "holdout"
+            }
           },
           {
             "key": "random_seed",
@@ -293,6 +340,14 @@
             "type": "path",
             "required": false,
             "hint": "Defaults to outputs/longitudinal_ml/<estimator_key>."
+          },
+          {
+            "key": "hyperparameters_json",
+            "label": "Hyperparameters JSON",
+            "type": "json",
+            "required": false,
+            "default": {},
+            "hint": "Estimator constructor overrides as JSON object."
           },
           {
             "key": "silent_training_output",
@@ -360,19 +415,61 @@
             "default": "f1_macro"
           },
           {
-            "key": "cv_folds",
-            "label": "Cross-validation folds",
+            "key": "evaluation_strategy",
+            "label": "Evaluation strategy",
+            "type": "enum",
+            "required": true,
+            "default": "cross_validation",
+            "options": [
+              {
+                "label": "Cross-validation",
+                "value": "cross_validation"
+              },
+              {
+                "label": "Holdout",
+                "value": "holdout"
+              }
+            ],
+            "hint": "Choose between stratified k-fold cross-validation and repeated stratified holdout evaluation."
+          },
+          {
+            "key": "n_splits",
+            "label": "Number of splits",
             "type": "int",
             "required": true,
             "default": 10,
-            "min": 2
+            "min": 2,
+            "hint": "For cross-validation, this is the number of folds. For holdout, this is the number of repeated random splits."
           },
           {
-            "key": "validation_split",
-            "label": "Validation split",
+            "key": "holdout_split",
+            "label": "Holdout split",
             "type": "string",
-            "required": false,
-            "default": "auto"
+            "required": true,
+            "default": "80/20",
+            "hint": "Train/validation ratio like `80/20` or validation fraction like `0.2`.",
+            "when": {
+              "field": "evaluation_strategy",
+              "equals": "holdout"
+            }
+          },
+          {
+            "key": "multiclass_mode",
+            "label": "Multiclass mode",
+            "type": "enum",
+            "required": true,
+            "default": "multiclass",
+            "options": [
+              {
+                "label": "Multiclass",
+                "value": "multiclass"
+              },
+              {
+                "label": "One-vs-rest",
+                "value": "one_vs_rest"
+              }
+            ],
+            "hint": "Used only when the target has more than two classes. Binary targets ignore this setting."
           },
           {
             "key": "random_seed",
@@ -387,6 +484,23 @@
             "type": "path",
             "required": false,
             "hint": "Defaults to outputs/benchmarks/standard_ml."
+          },
+          {
+            "key": "hyperparameters_json",
+            "label": "Global hyperparameters JSON",
+            "type": "json",
+            "required": false,
+            "default": {},
+            "hint": "Global estimator constructor overrides as JSON object. Keys unsupported by a given estimator are ignored."
+          },
+          {
+            "key": "max_parallel_candidates",
+            "label": "Max parallel candidates",
+            "type": "int",
+            "required": true,
+            "default": 1,
+            "min": 1,
+            "hint": "Maximum number of candidate estimators to train concurrently within each benchmark run."
           },
           {
             "key": "silent_training_output",
@@ -570,19 +684,43 @@
             "default": "f1_macro"
           },
           {
-            "key": "cv_folds",
-            "label": "Cross-validation folds",
+            "key": "evaluation_strategy",
+            "label": "Evaluation strategy",
+            "type": "enum",
+            "required": true,
+            "default": "cross_validation",
+            "options": [
+              {
+                "label": "Cross-validation",
+                "value": "cross_validation"
+              },
+              {
+                "label": "Holdout",
+                "value": "holdout"
+              }
+            ],
+            "hint": "Choose between stratified k-fold cross-validation and repeated stratified holdout evaluation."
+          },
+          {
+            "key": "n_splits",
+            "label": "Number of splits",
             "type": "int",
             "required": true,
             "default": 10,
-            "min": 2
+            "min": 2,
+            "hint": "For cross-validation, this is the number of folds. For holdout, this is the number of repeated random splits."
           },
           {
-            "key": "validation_split",
-            "label": "Validation split",
+            "key": "holdout_split",
+            "label": "Holdout split",
             "type": "string",
-            "required": false,
-            "default": "auto"
+            "required": true,
+            "default": "80/20",
+            "hint": "Train/validation ratio like `80/20` or validation fraction like `0.2`.",
+            "when": {
+              "field": "evaluation_strategy",
+              "equals": "holdout"
+            }
           },
           {
             "key": "random_seed",
@@ -597,6 +735,23 @@
             "type": "path",
             "required": false,
             "hint": "Defaults to outputs/benchmarks/longitudinal_ml."
+          },
+          {
+            "key": "hyperparameters_json",
+            "label": "Global hyperparameters JSON",
+            "type": "json",
+            "required": false,
+            "default": {},
+            "hint": "Global estimator constructor overrides as JSON object. Keys unsupported by a given estimator are ignored."
+          },
+          {
+            "key": "max_parallel_candidates",
+            "label": "Max parallel candidates",
+            "type": "int",
+            "required": true,
+            "default": 1,
+            "min": 1,
+            "hint": "Maximum number of candidate estimators to train concurrently within each benchmark run."
           },
           {
             "key": "silent_training_output",
@@ -780,19 +935,43 @@
             "default": "f1_macro"
           },
           {
-            "key": "cv_folds",
-            "label": "Cross-validation folds",
+            "key": "evaluation_strategy",
+            "label": "Evaluation strategy",
+            "type": "enum",
+            "required": true,
+            "default": "cross_validation",
+            "options": [
+              {
+                "label": "Cross-validation",
+                "value": "cross_validation"
+              },
+              {
+                "label": "Holdout",
+                "value": "holdout"
+              }
+            ],
+            "hint": "Choose between stratified k-fold cross-validation and repeated stratified holdout evaluation."
+          },
+          {
+            "key": "n_splits",
+            "label": "Number of splits",
             "type": "int",
             "required": true,
             "default": 10,
-            "min": 2
+            "min": 2,
+            "hint": "For cross-validation, this is the number of folds. For holdout, this is the number of repeated random splits."
           },
           {
-            "key": "validation_split",
-            "label": "Validation split",
+            "key": "holdout_split",
+            "label": "Holdout split",
             "type": "string",
-            "required": false,
-            "default": "auto"
+            "required": true,
+            "default": "80/20",
+            "hint": "Train/validation ratio like `80/20` or validation fraction like `0.2`.",
+            "when": {
+              "field": "evaluation_strategy",
+              "equals": "holdout"
+            }
           },
           {
             "key": "random_seed",
@@ -807,6 +986,23 @@
             "type": "path",
             "required": false,
             "hint": "Defaults to outputs/benchmarks/standard_and_longitudinal_ml."
+          },
+          {
+            "key": "hyperparameters_json",
+            "label": "Global hyperparameters JSON",
+            "type": "json",
+            "required": false,
+            "default": {},
+            "hint": "Global estimator constructor overrides as JSON object. Keys unsupported by a given estimator are ignored."
+          },
+          {
+            "key": "max_parallel_candidates",
+            "label": "Max parallel candidates",
+            "type": "int",
+            "required": true,
+            "default": 1,
+            "min": 1,
+            "hint": "Maximum number of candidate estimators to train concurrently within each benchmark run."
           },
           {
             "key": "silent_training_output",

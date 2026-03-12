@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
@@ -127,22 +128,37 @@ def parse_metric_keys(raw_metric_keys: str) -> tuple[str, ...]:
     return tuple(resolved_metric_keys)
 
 
-def parse_validation_split(raw_value: str, *, cv_folds: int) -> float | None:
-    """Parse a validation split string using the standard-ml parser.
+@dataclass(frozen=True)
+class EvaluationConfig:
+    """Canonical evaluation settings shared across ML workflows.
+
+    Args:
+        evaluation_strategy (str): Public evaluation strategy key.
+        n_splits (int): Number of folds or repeated holdout splits.
+        holdout_split (float | None): Holdout ratio, when applicable.
+    """
+
+    evaluation_strategy: str
+    n_splits: int
+    holdout_split: float | None
+
+
+def parse_holdout_split(raw_value: str) -> float:
+    """Parse a holdout split string.
 
     Args:
         raw_value (str): Raw value.
-        cv_folds (int): Cv folds.
 
     Returns:
-        float | None: Parsed floating-point value.
+        float: Parsed floating-point value.
     """
 
     raw = raw_value.strip()
-    if raw.lower() in {"", "auto", "kfold", "k-fold"}:
-        return None
+    if not raw:
+        raise InputValidationError(
+            "holdout_split is required when evaluation_strategy is `holdout`."
+        )
 
-    # Reuse the same parsing logic as the interactive implementation.
     if "/" in raw:
         parts = [part.strip() for part in raw.split("/", maxsplit=1)]
         if len(parts) != 2 or not parts[0] or not parts[1]:
@@ -157,7 +173,8 @@ def parse_validation_split(raw_value: str, *, cv_folds: int) -> float | None:
         parsed = float(raw)
     except ValueError as exc:
         raise InputValidationError(
-            "Validation split must be `auto`, a ratio like `70/30`, or a float in (0, 1)."
+            "holdout_split must be a ratio like `70/30` "
+            "or a float in (0, 1)."
         ) from exc
     if parsed > 1.0:
         parsed = parsed / 100.0
@@ -166,6 +183,45 @@ def parse_validation_split(raw_value: str, *, cv_folds: int) -> float | None:
             "Validation split must be a float strictly between 0 and 1."
         )
     return parsed
+
+
+def resolve_evaluation_config(
+    *,
+    evaluation_strategy_raw: str,
+    n_splits: int,
+    holdout_split_raw: str | None,
+) -> EvaluationConfig:
+    """Resolve public evaluation inputs into a canonical configuration.
+
+    Args:
+        evaluation_strategy_raw (str): Raw strategy token.
+        n_splits (int): Number of folds or repeated holdout splits.
+        holdout_split_raw (str | None): Raw holdout split string.
+
+    Returns:
+        EvaluationConfig: Canonical evaluation settings.
+    """
+
+    strategy = evaluation_strategy_raw.strip().lower().replace("-", "_")
+    if strategy not in {"cross_validation", "holdout"}:
+        raise InputValidationError(
+            "evaluation_strategy must be `cross_validation` or `holdout`."
+        )
+    if n_splits < 2:
+        raise InputValidationError("n_splits must be >= 2.")
+
+    if strategy == "cross_validation":
+        return EvaluationConfig(
+            evaluation_strategy="cross_validation",
+            n_splits=n_splits,
+            holdout_split=None,
+        )
+
+    return EvaluationConfig(
+        evaluation_strategy="holdout",
+        n_splits=n_splits,
+        holdout_split=parse_holdout_split(holdout_split_raw or ""),
+    )
 
 
 def parse_excluded_estimators(raw_value: str) -> set[str]:
@@ -255,8 +311,9 @@ __all__ = [
     "normalise_key",
     "parse_class_index",
     "parse_excluded_estimators",
+    "parse_holdout_split",
     "parse_metric_keys",
-    "parse_validation_split",
+    "resolve_evaluation_config",
     "resolve_feature_columns",
     "resolve_notebook_path",
     "resolve_target_column",

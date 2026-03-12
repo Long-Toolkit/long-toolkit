@@ -20,6 +20,8 @@ from .stage_2_sentinels import apply_stage_2, resolve_stage_2_config
 from .stage_3_modelling_policy import apply_stage_3, resolve_stage_3_config
 from .stage_4_finalisation import apply_stage_4, resolve_stage_4_config
 from .stage_5_encoding_policy import apply_stage_5, resolve_stage_5_config
+from .stage_6_trajectory_merge import apply_stage_6, resolve_stage_6_config
+from .stage_7_ml_ready import apply_stage_7, resolve_stage_7_config
 
 _PRESET_DIR = Path(__file__).resolve().parent
 _DEFAULTS_CONFIG = _PRESET_DIR / "defaults.yaml"
@@ -35,12 +37,16 @@ class GeneralDefaults:
     save_audit_tables: bool
     default_output_path: Path
     default_audit_output_dir: Path
+    default_trajectory_id_col: str
+    default_trajectory_class_col: str
     default_stage_0_config_path: Path
     default_stage_1_config_path: Path
     default_stage_2_config_path: Path
     default_stage_3_config_path: Path
     default_stage_4_config_path: Path
     default_stage_5_config_path: Path
+    default_stage_6_config_path: Path
+    default_stage_7_config_path: Path
 
 
 @beartype
@@ -54,12 +60,22 @@ class PreprocessMCSByLEAPPipelineConfig:
     save_audit_tables: bool
     audit_output_dir: Path | None
     show_summary_logs: bool
+    trajectory_input_path: Path | None
+    trajectory_id_col: str
+    trajectory_class_col: str
+    ml_ready_enabled: bool
+    ml_ready_drop_columns_mode: str
+    ml_ready_drop_columns: tuple[str, ...]
+    ml_ready_imputation_enabled: bool
+    ml_ready_imputation_strategy: str
     stage_0_config_path: Path
     stage_1_config_path: Path
     stage_2_config_path: Path
     stage_3_config_path: Path
     stage_4_config_path: Path
     stage_5_config_path: Path
+    stage_6_config_path: Path
+    stage_7_config_path: Path
 
 
 @beartype
@@ -77,6 +93,8 @@ class PipelineRunResult:
     stage_3_summary: dict[str, object]
     stage_4_summary: dict[str, object]
     stage_5_summary: dict[str, object]
+    stage_6_summary: dict[str, object]
+    stage_7_summary: dict[str, object]
 
 
 @beartype
@@ -86,6 +104,7 @@ def general_defaults() -> GeneralDefaults:
     raw = _load_yaml(_DEFAULTS_CONFIG)
     general = _as_mapping(raw.get("general"), "general")
     output = _as_mapping(raw.get("output"), "output")
+    trajectory_merge = _as_mapping(raw.get("trajectory_merge"), "trajectory_merge")
     stage_configs = _as_mapping(raw.get("stage_configs"), "stage_configs")
 
     default_output_path = _as_path(
@@ -120,18 +139,36 @@ def general_defaults() -> GeneralDefaults:
         stage_configs.get("stage_5_encoding_policy"),
         "stage_configs.stage_5_encoding_policy",
     )
+    stage_6_rel = _as_path(
+        stage_configs.get("stage_6_trajectory_merge"),
+        "stage_configs.stage_6_trajectory_merge",
+    )
+    stage_7_rel = _as_path(
+        stage_configs.get("stage_7_ml_ready"),
+        "stage_configs.stage_7_ml_ready",
+    )
 
     return GeneralDefaults(
         show_summary_logs=bool(general.get("show_summary_logs", True)),
         save_audit_tables=bool(general.get("save_audit_tables", True)),
         default_output_path=default_output_path,
         default_audit_output_dir=default_audit_output_dir,
+        default_trajectory_id_col=_as_string(
+            trajectory_merge.get("default_trajectory_id_col", "CHID"),
+            "trajectory_merge.default_trajectory_id_col",
+        ),
+        default_trajectory_class_col=_as_string(
+            trajectory_merge.get("default_trajectory_class_col", "class"),
+            "trajectory_merge.default_trajectory_class_col",
+        ),
         default_stage_0_config_path=_PRESET_DIR / stage_0_rel,
         default_stage_1_config_path=_PRESET_DIR / stage_1_rel,
         default_stage_2_config_path=_PRESET_DIR / stage_2_rel,
         default_stage_3_config_path=_PRESET_DIR / stage_3_rel,
         default_stage_4_config_path=_PRESET_DIR / stage_4_rel,
         default_stage_5_config_path=_PRESET_DIR / stage_5_rel,
+        default_stage_6_config_path=_PRESET_DIR / stage_6_rel,
+        default_stage_7_config_path=_PRESET_DIR / stage_7_rel,
     )
 
 
@@ -140,7 +177,7 @@ def run_preprocess_mcs_by_leap_pipeline(
     *,
     config: PreprocessMCSByLEAPPipelineConfig,
 ) -> PipelineRunResult:
-    """Execute the 6-stage preprocess MCS by LEAP pipeline."""
+    """Execute the preprocess MCS by LEAP pipeline with optional post-processing stages."""
 
     _validate_runtime_paths(config=config)
 
@@ -191,7 +228,36 @@ def run_preprocess_mcs_by_leap_pipeline(
     if config.show_summary_logs:
         _print_stage_summary(stage_name="Stage 5 - Encoding Policy", metrics=stage_5_result.summary)
 
-    final_data = stage_5_result.data
+    stage_6_cfg = resolve_stage_6_config(
+        config_path=config.stage_6_config_path,
+        trajectory_input_path=config.trajectory_input_path,
+        original_id_column="CHID",
+        trajectory_id_column=config.trajectory_id_col,
+        trajectory_class_column=config.trajectory_class_col,
+    )
+    stage_6_result = apply_stage_6(data=stage_5_result.data, config=stage_6_cfg)
+    if config.show_summary_logs:
+        _print_stage_summary(
+            stage_name="Stage 6 - Optional Trajectory Merge",
+            metrics=stage_6_result.summary,
+        )
+
+    stage_7_cfg = resolve_stage_7_config(
+        config_path=config.stage_7_config_path,
+        enabled=config.ml_ready_enabled,
+        drop_columns_mode=config.ml_ready_drop_columns_mode,
+        manual_drop_columns=config.ml_ready_drop_columns,
+        imputation_enabled=config.ml_ready_imputation_enabled,
+        imputation_strategy=config.ml_ready_imputation_strategy,
+    )
+    stage_7_result = apply_stage_7(data=stage_6_result.data, config=stage_7_cfg)
+    if config.show_summary_logs:
+        _print_stage_summary(
+            stage_name="Stage 7 - Optional ML-Ready Cleanup",
+            metrics=stage_7_result.summary,
+        )
+
+    final_data = stage_7_result.data
     output_path: Path | None = None
     if config.save_final_output:
         if config.output_path is None:
@@ -247,6 +313,18 @@ def run_preprocess_mcs_by_leap_pipeline(
                 stage_tables=stage_5_result.tables,
             )
         )
+        audit_paths.extend(
+            _save_stage_tables(
+                audit_output_dir=audit_output_dir,
+                stage_tables=stage_6_result.tables,
+            )
+        )
+        audit_paths.extend(
+            _save_stage_tables(
+                audit_output_dir=audit_output_dir,
+                stage_tables=stage_7_result.tables,
+            )
+        )
 
         summary_payload = {
             "input_path": str(config.input_path.resolve()),
@@ -261,6 +339,8 @@ def run_preprocess_mcs_by_leap_pipeline(
             "stage_3_summary": asdict(stage_3_result.summary),
             "stage_4_summary": asdict(stage_4_result.summary),
             "stage_5_summary": asdict(stage_5_result.summary),
+            "stage_6_summary": asdict(stage_6_result.summary),
+            "stage_7_summary": asdict(stage_7_result.summary),
         }
 
         summary_path = audit_output_dir / "pipeline_summary.json"
@@ -289,6 +369,8 @@ def run_preprocess_mcs_by_leap_pipeline(
         stage_3_summary=asdict(stage_3_result.summary),
         stage_4_summary=asdict(stage_4_result.summary),
         stage_5_summary=asdict(stage_5_result.summary),
+        stage_6_summary=asdict(stage_6_result.summary),
+        stage_7_summary=asdict(stage_7_result.summary),
     )
 
 
@@ -321,6 +403,15 @@ def _print_run_header(*, config: PreprocessMCSByLEAPPipelineConfig, data: pd.Dat
     table.add_row("Columns", str(int(data.shape[1])))
     table.add_row("Save final output", str(config.save_final_output))
     table.add_row("Save audit tables", str(config.save_audit_tables))
+    table.add_row(
+        "Trajectory merge",
+        (
+            str(config.trajectory_input_path.resolve())
+            if config.trajectory_input_path is not None
+            else "(skipped)"
+        ),
+    )
+    table.add_row("ML-ready stage", str(config.ml_ready_enabled))
     _CONSOLE.print(table)
 
 
@@ -372,6 +463,17 @@ def _validate_runtime_paths(*, config: PreprocessMCSByLEAPPipelineConfig) -> Non
         raise InputValidationError(
             f"Input file does not exist: {config.input_path.expanduser()}"
         )
+    if (
+        config.trajectory_input_path is not None
+        and (
+            not config.trajectory_input_path.exists()
+            or not config.trajectory_input_path.is_file()
+        )
+    ):
+        raise InputValidationError(
+            "Trajectory input file does not exist: "
+            f"{config.trajectory_input_path.expanduser()}"
+        )
 
     for path in (
         config.stage_0_config_path,
@@ -380,6 +482,8 @@ def _validate_runtime_paths(*, config: PreprocessMCSByLEAPPipelineConfig) -> Non
         config.stage_3_config_path,
         config.stage_4_config_path,
         config.stage_5_config_path,
+        config.stage_6_config_path,
+        config.stage_7_config_path,
     ):
         if not path.exists() or not path.is_file():
             raise InputValidationError(f"Stage config file does not exist: {path}")
@@ -397,6 +501,13 @@ def _as_path(value: object, context: str) -> Path:
     if not isinstance(value, str) or not value.strip():
         raise InputValidationError(f"`{context}` must be a non-empty path string.")
     return Path(value.strip()).expanduser()
+
+
+@beartype
+def _as_string(value: object, context: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise InputValidationError(f"`{context}` must be a non-empty string.")
+    return value.strip()
 
 
 @cache

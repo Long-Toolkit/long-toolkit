@@ -9,21 +9,23 @@ from beartype import beartype
 from ldt.machine_learning.catalog import resolve_technique_with_defaults
 from ldt.machine_learning.support.inputs import (
     as_bool,
+    as_optional_object,
     as_optional_string,
     as_required_int,
     as_required_string,
     load_input_dataset,
     parse_excluded_estimators,
     parse_metric_keys,
-    parse_validation_split,
+    resolve_evaluation_config,
     resolve_feature_columns,
     resolve_notebook_path,
     resolve_target_column,
     run_with_validation,
 )
 from ldt.machine_learning.support.runtime_validation import (
-    validate_cv_split_feasibility,
-    validate_one_vs_rest_cv_folds,
+    filter_supported_hyperparameters,
+    validate_evaluation_split_feasibility,
+    validate_one_vs_rest_evaluation_splits,
 )
 from ldt.machine_learning.tools.longitudinal_machine_learning.discovery import (
     discover_longitudinal_estimators,
@@ -85,8 +87,8 @@ class BenchmarkLongitudinalML(MachineLearningTool):
             non_longitudinal_mode="auto",
             excluded_estimators="",
             metric_keys="accuracy,f1_macro",
-            cv_folds=5,
-            validation_split="none",
+            evaluation_strategy="cross_validation",
+            n_splits=5,
             random_seed=42,
         )
         ```
@@ -128,8 +130,10 @@ class BenchmarkLongitudinalML(MachineLearningTool):
                   `feature_groups`, `feature_groups_mode`,
                   `feature_groups_preset`, `feature_groups_suffix`,
                   `non_longitudinal_features`, `non_longitudinal_mode`,
-                  `excluded_estimators`, `metric_keys`, `cv_folds`,
-                  `validation_split`, `random_seed`, `output_root_dir`,
+                  `excluded_estimators`, `metric_keys`, `evaluation_strategy`,
+                  `n_splits`, `holdout_split`, `random_seed`, `output_root_dir`,
+                  `max_parallel_candidates`,
+                  `hyperparameters_json`,
                   `silent_training_output`, `generate_notebook`,
                   `notebook_output_path`,
                   `include_pipeline_profiler_at_end`, and
@@ -178,8 +182,10 @@ class BenchmarkLongitudinalML(MachineLearningTool):
                 `feature_groups`, `feature_groups_mode`,
                 `feature_groups_preset`, `feature_groups_suffix`,
                 `non_longitudinal_features`, `non_longitudinal_mode`,
-                `excluded_estimators`, `metric_keys`, `cv_folds`,
-                `validation_split`, `random_seed`, `output_root_dir`,
+                `excluded_estimators`, `metric_keys`, `evaluation_strategy`,
+                `n_splits`, `holdout_split`, `random_seed`, `output_root_dir`,
+                `max_parallel_candidates`,
+                `hyperparameters_json`,
                 `silent_training_output`, `generate_notebook`,
                 `notebook_output_path`,
                 `include_pipeline_profiler_at_end`, and
@@ -246,8 +252,10 @@ def run_benchmark_longitudinal_ml_tool(
             `feature_groups_mode`, `feature_groups_preset`,
             `feature_groups_suffix`, `non_longitudinal_features`,
             `non_longitudinal_mode`, `excluded_estimators`, `metric_keys`,
-            `cv_folds`, `validation_split`, `random_seed`; optional keys:
-            `output_root_dir`, `silent_training_output`, `generate_notebook`,
+            `evaluation_strategy`, `n_splits`, `holdout_split`, `random_seed`;
+            optional keys:
+            `output_root_dir`, `max_parallel_candidates`, `hyperparameters_json`,
+            `silent_training_output`, `generate_notebook`,
             `notebook_output_path`, `include_pipeline_profiler_at_end`, and
             `generate_pipeline_profiler_html`.
 
@@ -324,6 +332,7 @@ def _run_benchmark_longitudinal_ml_tool(
         raise InputValidationError(
             "All estimators were excluded. Include at least one estimator."
         )
+    effective_max_parallel_candidates = 1
 
     input_path = Path(as_required_string(resolved, "input_path")).expanduser()
     dataset = load_input_dataset(input_path=input_path)
@@ -360,12 +369,21 @@ def _run_benchmark_longitudinal_ml_tool(
     y_raw = modelling_data[target_column].copy()
 
     metric_keys = parse_metric_keys(as_required_string(resolved, "metric_keys"))
-    cv_folds = as_required_int(resolved, "cv_folds", minimum=2)
-    validation_split = parse_validation_split(
-        as_required_string(resolved, "validation_split"),
-        cv_folds=cv_folds,
+    evaluation = resolve_evaluation_config(
+        evaluation_strategy_raw=as_required_string(resolved, "evaluation_strategy"),
+        n_splits=as_required_int(resolved, "n_splits", minimum=2),
+        holdout_split_raw=as_optional_string(resolved, "holdout_split"),
     )
     random_seed = as_required_int(resolved, "random_seed")
+    max_parallel_candidates = as_required_int(
+        resolved,
+        "max_parallel_candidates",
+        minimum=1,
+    )
+    effective_max_parallel_candidates = min(
+        max_parallel_candidates,
+        len(included_estimators),
+    )
     silent_training_output = as_bool(
         resolved.get("silent_training_output", True),
         field_name="silent_training_output",
@@ -377,6 +395,7 @@ def _run_benchmark_longitudinal_ml_tool(
         if output_root_raw is not None
         else Path("outputs/benchmarks/longitudinal_ml").expanduser()
     )
+    hyperparameter_overrides = as_optional_object(resolved, "hyperparameters_json")
 
     generate_notebook = as_bool(
         resolved.get("generate_notebook", True),
@@ -406,18 +425,20 @@ def _run_benchmark_longitudinal_ml_tool(
     scenarios = None
     if unique_class_count > 2:
         scenarios = TargetScenarioPlanner.build_one_vs_rest_scenarios(y=y_raw)
-        validate_one_vs_rest_cv_folds(
-            cv_folds=cv_folds,
-            validation_split=validation_split,
+        validate_one_vs_rest_evaluation_splits(
+            n_splits=evaluation.n_splits,
+            evaluation_strategy=evaluation.evaluation_strategy,
+            holdout_split=evaluation.holdout_split,
             scenarios=scenarios,
         )
     else:
         encoded = LongitudinalTargetEncoder.encode_if_needed(y=y_raw)
         y_raw = encoded.encoded_target
-        validate_cv_split_feasibility(
+        validate_evaluation_split_feasibility(
             y=y_raw,
-            cv_folds=cv_folds,
-            validation_split=validation_split,
+            n_splits=evaluation.n_splits,
+            evaluation_strategy=evaluation.evaluation_strategy,
+            holdout_split=evaluation.holdout_split,
         )
 
     def _build_specs() -> tuple[Any, ...]:
@@ -427,6 +448,10 @@ def _run_benchmark_longitudinal_ml_tool(
                 estimator_name=resolve_component_metadata(estimator_template).full_name,
                 estimator=estimator_template.build_estimator(
                     random_seed=random_seed,
+                    hyperparameters=filter_supported_hyperparameters(
+                        estimator_template=estimator_template,
+                        hyperparameter_overrides=hyperparameter_overrides,
+                    ),
                     feature_groups=feature_vectors.feature_groups,
                     non_longitudinal_features=feature_vectors.non_longitudinal_features,
                     feature_list_names=tuple(feature_columns),
@@ -446,10 +471,12 @@ def _run_benchmark_longitudinal_ml_tool(
                 y=scenario.y_binary,
                 metric_keys=metric_keys,
                 output_root_dir=scenario_output_root,
-                cv_folds=cv_folds,
+                n_splits=evaluation.n_splits,
+                evaluation_strategy=evaluation.evaluation_strategy,
                 random_seed=random_seed,
-                validation_split=validation_split,
+                holdout_split=evaluation.holdout_split,
                 silent_training_output=silent_training_output,
+                max_parallel_candidates=max_parallel_candidates,
                 generate_pipeline_profiler_html=generate_pipeline_profiler_html,
             )
             benchmark_runs.append(
@@ -482,10 +509,12 @@ def _run_benchmark_longitudinal_ml_tool(
             y=y_raw,
             metric_keys=metric_keys,
             output_root_dir=output_root_dir,
-            cv_folds=cv_folds,
+            n_splits=evaluation.n_splits,
+            evaluation_strategy=evaluation.evaluation_strategy,
             random_seed=random_seed,
-            validation_split=validation_split,
+            holdout_split=evaluation.holdout_split,
             silent_training_output=silent_training_output,
+            max_parallel_candidates=max_parallel_candidates,
             generate_pipeline_profiler_html=generate_pipeline_profiler_html,
         )
         benchmark_runs.append(
@@ -519,15 +548,18 @@ def _run_benchmark_longitudinal_ml_tool(
             output_root_dir=output_root_dir,
             benchmark_name=_BENCHMARK_NAME,
             excluded_estimators=tuple(sorted(excluded)),
+            hyperparameters_json=hyperparameter_overrides,
             target_column=target_column,
             feature_columns=tuple(feature_columns),
             feature_groups=feature_vectors.feature_groups,
             non_longitudinal_features=feature_vectors.non_longitudinal_features,
             metric_keys=metric_keys,
-            cv_folds=cv_folds,
-            validation_split=validation_split,
+            evaluation_strategy=evaluation.evaluation_strategy,
+            n_splits=evaluation.n_splits,
+            holdout_split=evaluation.holdout_split,
             random_seed=random_seed,
             silent_training_output=silent_training_output,
+            max_parallel_candidates=max_parallel_candidates,
             include_pipeline_profiler_at_end=include_pipeline_profiler_at_end,
         )
         saved_notebook = LongitudinalBenchmarkNotebookTemplate().write_notebook(
@@ -536,6 +568,10 @@ def _run_benchmark_longitudinal_ml_tool(
 
     return {
         "benchmark_name": _BENCHMARK_NAME,
+        "evaluation_strategy": evaluation.evaluation_strategy,
+        "n_splits": evaluation.n_splits,
+        "holdout_split": evaluation.holdout_split,
+        "max_parallel_candidates": effective_max_parallel_candidates,
         "included_estimators": len(included_estimators),
         "excluded_estimators": sorted(excluded),
         "runs": benchmark_runs,

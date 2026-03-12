@@ -141,6 +141,22 @@ flowchart LR
         A long-only output cannot be used as preprocessing input for this preset.
         Final target for this preset is `EMOTION_w7`.
 
+    !!! info "Optional final stages"
+
+        The preset supports two optional post-processing stages.
+
+        **Stage 6** merges externally inferred trajectory classes into the final
+        preprocessed dataset. Those classes are not generated inside `ldt-toolkit`:
+        they must be inferred separately in **MPlus**, for example by **Dr Alex Kwong**,
+        then supplied as a CSV containing subject ID plus class membership. By default
+        the preset expects `CHID` and `class`, but both source columns can be
+        overridden at runtime.
+
+        **Stage 7** can make the dataset more machine-learning-ready: it can auto-drop
+        configured columns such as `CHID`, or accept a manual comma-separated drop list,
+        then optionally run simple imputation (`mean`, `median`, `most_frequent`,
+        or `constant`).
+
     **CLI**
 
     Use this stage to convert prepared wide data into ML-ready wide output with audit logs.
@@ -160,6 +176,7 @@ flowchart LR
 
     - `data/processed/MCS/mcs_longitudinal_wide_preprocessed.csv`
     - `data/processed/MCS/preprocess_logs/` (audit tables + `pipeline_summary.json`)
+    - Optional: the same final CSV enriched with a merged `class` column from an external MPlus trajectory file
 
     **API**
 
@@ -168,6 +185,10 @@ flowchart LR
 
     preprocess = PreprocessMCSByLEAP().fit_preprocess(
         input_path="data/processed/MCS/mcs_longitudinal_wide.csv",
+        # Optional final merge if you received trajectories from Dr. Alex Kwong / MPlus:
+        # trajectory_input_path="data/trajectories.csv",
+        # trajectory_id_col="CHID",
+        # trajectory_class_col="class",
     )
 
     print(preprocess.output_data.shape)
@@ -187,7 +208,7 @@ flowchart LR
 
 === "Run Them All In One Go (API only)"
 
-    This example runs the currently available presets end to end from the repository root: `Prepare MCS by LEAP` followed by `Preprocess MCS by LEAP`.
+    This example runs the currently available presets end to end from the repository root: `Prepare MCS by LEAP` followed by `Preprocess MCS by LEAP`, including the optional final trajectory merge from `data/trajectories.csv`.
     `Model MCS by LEAP` is not included yet because that preset is still incoming.
 
     ```python
@@ -200,6 +221,7 @@ flowchart LR
     project_root = Path(".")
     mcs_root = project_root / "data" / "MCS"  # Change this to wherever your raw MCS extract is stored.
     processed_root = project_root / "data" / "processed" / "MCS"
+    trajectory_path = project_root / "data" / "trajectories.csv"  # Optional external MPlus trajectories file.
     preprocess_preset_root = (
         project_root
         / "src"
@@ -246,6 +268,9 @@ flowchart LR
         save_audit_tables=True,
         audit_output_dir=str(processed_root / "preprocess_logs"),
         show_summary_logs=True,
+        trajectory_input_path=str(trajectory_path),
+        trajectory_id_col="CHID",
+        trajectory_class_col="class",
         stage_0_config_path=str(
             preprocess_preset_root / "stage_0_target_rows" / "policy.yaml"
         ),
@@ -272,6 +297,7 @@ flowchart LR
     print("Preprocess output:", preprocess_result.output_path)
     print("Preprocess audit dir:", preprocess_result.audit_output_dir)
     print("Preprocessed shape:", preprocess_result.output_data.shape)
+    print("Trajectory class merged:", "class" in preprocess_result.output_data.columns)
     ```
 
 ## Stage-by-Stage Configuration
@@ -351,6 +377,8 @@ The sections below show, stage by stage, which configuration file controls the d
     | 3. Modelling policy | Applies the configured predictor-removal policy while preserving the final target | `stage_3_modelling_policy/policy.yaml` |
     | 4. Finalisation | Profiles predictor missingness and computes high-correlation pairs (dry-run by default) | `stage_4_finalisation/policy.yaml` |
     | 5. Encoding | Applies strict root-level binary/ordinal/continuous/nominal policy and cleanup | `stage_5_encoding_policy/policy.yaml` |
+    | 6. Optional trajectory merge | Merges externally inferred trajectory class labels into the final preset output using `CHID`, then drops `EMOTION_w7` by default | `stage_6_trajectory_merge/policy.yaml` + runtime parameters |
+    | 7. Optional ML-ready cleanup | Drops configured or manually selected columns, then can optionally impute missing data | `stage_7_ml_ready/policy.yaml` + runtime parameters |
 
     Stage details (default behaviour):
 
@@ -423,6 +451,42 @@ The sections below show, stage by stage, which configuration file controls the d
           - `stage5_constant_predictor_dropped_features.csv`
           - `stage5_encoding_summary_counts.csv`
 
+    ??? abstract "Stage 6 - Optional trajectory merge"
+
+        - This stage is skipped unless `trajectory_input_path` is supplied at runtime.
+        - Intended for trajectories inferred outside the toolkit in **MPlus**, for example by **Dr Alex Kwong**.
+        - Reads one external CSV and merges its class assignments into the final preset output.
+        - Preset output is matched on `CHID`.
+        - By default the external file is expected to contain `CHID` and `class`, but
+          source-column names are resolved case-insensitively and can be overridden with
+          runtime parameters.
+        - Only the trajectory class column is merged into the preset output, and it is
+          written as `class`.
+        - By default, `EMOTION_w7` is removed after the merge (`drop_target_column_after_merge: true`).
+        - Core audit outputs:
+          - `stage6_trajectory_merge_policy.csv`
+          - `stage6_trajectory_merge_duplicate_ids.csv`
+          - `stage6_trajectory_merge_unmatched_ids.csv`
+
+    ??? abstract "Stage 7 - Optional ML-ready cleanup"
+
+        - This stage is skipped unless enabled at runtime.
+        - Drop mode can be `auto` or `manual`.
+        - Auto mode removes the configured default column list from `stage_7_ml_ready/policy.yaml`.
+        - That default list includes `CHID`.
+        - Manual mode accepts a runtime comma-separated list of columns to remove and requires at least one column name.
+        - Imputation is optional and disabled by default.
+        - When enabled, supported strategies are:
+          - `mean`
+          - `median`
+          - `most_frequent`
+          - `constant`
+        - `mean` and `median` are applied only to numeric columns; columns that cannot be imputed by the chosen strategy are reported as skipped in the audit table.
+        - Core audit outputs:
+          - `stage7_ml_ready_policy.csv`
+          - `stage7_ml_ready_dropped_columns.csv`
+          - `stage7_ml_ready_imputation_columns.csv`
+
     Preprocess runtime defaults:
 
     | Parameter | Default |
@@ -433,6 +497,14 @@ The sections below show, stage by stage, which configuration file controls the d
     | `save_final_output` | `true` |
     | `save_audit_tables` | `true` |
     | `show_summary_logs` | `true` |
+    | `trajectory_input_path` | optional |
+    | `trajectory_id_col` | `CHID` |
+    | `trajectory_class_col` | `class` |
+    | `ml_ready_enabled` | `false` |
+    | `ml_ready_drop_columns_mode` | `auto` |
+    | `ml_ready_drop_columns` | empty |
+    | `ml_ready_imputation_enabled` | `false` |
+    | `ml_ready_imputation_strategy` | `mean` |
 
 === "ModelMCSByLEAP (Config)"
 

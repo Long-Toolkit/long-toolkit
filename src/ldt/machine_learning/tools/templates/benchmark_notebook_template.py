@@ -18,13 +18,16 @@ class ClassificationBenchmarkNotebookConfig:
         output_root_dir (Path): Filesystem location for output root dir.
         benchmark_name (str): Name for benchmark.
         excluded_estimators (tuple[str, ...]): Excluded estimators.
+        multiclass_mode (str): Multiclass handling mode for >2 classes.
         target_column (str): Column name for target column.
         feature_columns (tuple[str, ...]): Column names for feature columns.
         metric_keys (tuple[str, ...]): Metric keys.
-        cv_folds (int): Cv folds.
-        validation_split (float | None): Validation split.
+        evaluation_strategy (str): Public evaluation strategy key.
+        n_splits (int): Number of folds or repeated holdout splits.
+        holdout_split (float | None): Holdout ratio, when applicable.
         random_seed (int): Random seed for reproducibility.
         silent_training_output (bool): Whether to silent training output.
+        max_parallel_candidates (int): Maximum number of concurrent candidates.
         include_pipeline_profiler_at_end (bool): Whether to include pipeline profiler at end.
         pipeline_profiler_max_pipelines (int): Pipeline profiler max pipelines.
 
@@ -35,13 +38,17 @@ class ClassificationBenchmarkNotebookConfig:
     output_root_dir: Path
     benchmark_name: str
     excluded_estimators: tuple[str, ...]
+    hyperparameters_json: dict[str, object]
+    multiclass_mode: str
     target_column: str
     feature_columns: tuple[str, ...]
     metric_keys: tuple[str, ...]
-    cv_folds: int
-    validation_split: float | None
+    evaluation_strategy: str
+    n_splits: int
+    holdout_split: float | None
     random_seed: int
     silent_training_output: bool
+    max_parallel_candidates: int
     include_pipeline_profiler_at_end: bool
     pipeline_profiler_max_pipelines: int = 5
 
@@ -110,13 +117,17 @@ class ClassificationBenchmarkNotebookTemplate:
             f"OUTPUT_ROOT_DIR = Path({repr(str(config.output_root_dir.resolve()))})\n"
             f"BENCHMARK_NAME = {repr(config.benchmark_name)}\n"
             f"EXCLUDED_ESTIMATORS = {repr(list(config.excluded_estimators))}\n"
+            f"HYPERPARAMETERS_JSON = {repr(config.hyperparameters_json)}\n"
+            f"MULTICLASS_MODE = {repr(config.multiclass_mode)}\n"
             f"TARGET_COLUMN = {repr(config.target_column)}\n"
             f"FEATURE_COLUMNS = {repr(list(config.feature_columns))}\n"
             f"METRIC_KEYS = {repr(list(config.metric_keys))}\n"
-            f"CV_FOLDS = {config.cv_folds}\n"
-            f"VALIDATION_SPLIT = {repr(config.validation_split)}\n"
+            f"EVALUATION_STRATEGY = {repr(config.evaluation_strategy)}\n"
+            f"N_SPLITS = {config.n_splits}\n"
+            f"HOLDOUT_SPLIT = {repr(config.holdout_split)}\n"
             f"RANDOM_SEED = {config.random_seed}\n"
             f"SILENT_TRAINING_OUTPUT = {config.silent_training_output}\n"
+            f"MAX_PARALLEL_CANDIDATES = {config.max_parallel_candidates}\n"
             "INCLUDE_PIPELINE_PROFILER_AT_END = "
             f"{config.include_pipeline_profiler_at_end}\n"
             "PIPELINE_PROFILER_MAX_PIPELINES = "
@@ -135,6 +146,12 @@ class ClassificationBenchmarkNotebookTemplate:
             "discovery import (\n"
             "    discover_standard_estimators,\n"
             ")\n"
+            "from ldt.machine_learning.support.runtime_validation import (\n"
+            "    filter_supported_hyperparameters,\n"
+            "    validate_evaluation_split_feasibility,\n"
+            "    validate_one_vs_rest_evaluation_splits,\n"
+            ")\n"
+            "from ldt.machine_learning.tools.target_scenarios import TargetScenarioPlanner\n"
             "from ldt.machine_learning.tools.templates import (\n"
             "    BenchmarkEstimatorSpec,\n"
             "    ClassificationBenchmarkTemplate,\n"
@@ -168,90 +185,135 @@ class ClassificationBenchmarkNotebookTemplate:
             "                estimator_template\n"
             "            ).full_name,\n"
             "            estimator=estimator_template.build_estimator(\n"
-            "                hyperparameters={},\n"
+            "                hyperparameters=filter_supported_hyperparameters(\n"
+            "                    estimator_template=estimator_template,\n"
+            "                    hyperparameter_overrides=HYPERPARAMETERS_JSON,\n"
+            "                ),\n"
             "                random_seed=RANDOM_SEED,\n"
             "            ),\n"
             "        )\n"
             "    )\n\n"
-            "benchmark_result = ClassificationBenchmarkTemplate().run(\n"
-            f"    benchmark_name={repr(config.benchmark_name)},\n"
-            "    estimator_specs=tuple(estimator_specs),\n"
-            "    X=X,\n"
-            "    y=y,\n"
-            "    metric_keys=tuple(METRIC_KEYS),\n"
-            "    output_root_dir=OUTPUT_ROOT_DIR,\n"
-            "    cv_folds=CV_FOLDS,\n"
-            "    validation_split=VALIDATION_SPLIT,\n"
-            "    random_seed=RANDOM_SEED,\n"
-            "    silent_training_output=SILENT_TRAINING_OUTPUT,\n"
-            "    generate_pipeline_profiler_html=False,\n"
-            ")\n"
+            "if MULTICLASS_MODE not in {'multiclass', 'one_vs_rest'}:\n"
+            "    raise ValueError(\n"
+            "        'MULTICLASS_MODE must be `multiclass` or `one_vs_rest`.'\n"
+            "    )\n\n"
+            "scenario_runs = []\n"
+            "if y.nunique(dropna=True) > 2 and MULTICLASS_MODE == 'one_vs_rest':\n"
+            "    scenarios = TargetScenarioPlanner.build_one_vs_rest_scenarios(y=y)\n"
+            "    validate_one_vs_rest_evaluation_splits(\n"
+            "        n_splits=N_SPLITS,\n"
+            "        evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "        holdout_split=HOLDOUT_SPLIT,\n"
+            "        scenarios=scenarios,\n"
+            "    )\n"
+            "    for scenario in scenarios:\n"
+            "        scenario_output_root_dir = OUTPUT_ROOT_DIR / scenario.scenario_key\n"
+            "        benchmark_result = ClassificationBenchmarkTemplate().run(\n"
+            f"            benchmark_name={repr(config.benchmark_name)},\n"
+            "            estimator_specs=tuple(estimator_specs),\n"
+            "            X=X,\n"
+            "            y=scenario.y_binary,\n"
+            "            metric_keys=tuple(METRIC_KEYS),\n"
+            "            output_root_dir=scenario_output_root_dir,\n"
+            "            n_splits=N_SPLITS,\n"
+            "            evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "            holdout_split=HOLDOUT_SPLIT,\n"
+            "            random_seed=RANDOM_SEED,\n"
+            "            silent_training_output=SILENT_TRAINING_OUTPUT,\n"
+            "            max_parallel_candidates=MAX_PARALLEL_CANDIDATES,\n"
+            "            generate_pipeline_profiler_html=False,\n"
+            "        )\n"
+            "        scenario_runs.append(\n"
+            "            {\n"
+            "                'scenario_key': scenario.scenario_key,\n"
+            "                'scenario_label': scenario.scenario_label,\n"
+            "                'benchmark_result': benchmark_result,\n"
+            "            }\n"
+            "        )\n"
+            "else:\n"
+            "    validate_evaluation_split_feasibility(\n"
+            "        y=y,\n"
+            "        n_splits=N_SPLITS,\n"
+            "        evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "        holdout_split=HOLDOUT_SPLIT,\n"
+            "    )\n"
+            "    benchmark_result = ClassificationBenchmarkTemplate().run(\n"
+            f"        benchmark_name={repr(config.benchmark_name)},\n"
+            "        estimator_specs=tuple(estimator_specs),\n"
+            "        X=X,\n"
+            "        y=y,\n"
+            "        metric_keys=tuple(METRIC_KEYS),\n"
+            "        output_root_dir=OUTPUT_ROOT_DIR,\n"
+            "        n_splits=N_SPLITS,\n"
+            "        evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "        holdout_split=HOLDOUT_SPLIT,\n"
+            "        random_seed=RANDOM_SEED,\n"
+            "        silent_training_output=SILENT_TRAINING_OUTPUT,\n"
+            "        max_parallel_candidates=MAX_PARALLEL_CANDIDATES,\n"
+            "        generate_pipeline_profiler_html=False,\n"
+            "    )\n"
+            "    scenario_runs.append(\n"
+            "        {\n"
+            "            'scenario_key': 'single_run',\n"
+            "            'scenario_label': 'Single run',\n"
+            "            'benchmark_result': benchmark_result,\n"
+            "        }\n"
+            "    )\n"
         )
 
     @staticmethod
     @beartype
     def _build_cell_three() -> str:
-        """Build notebook cell rendering benchmark results."""
+        """Build notebook cell rendering per-scenario benchmark results."""
 
         return (
-            "# Cell 3: benchmark results\n"
-            "from IPython.display import display\n\n"
-            "ranking_rows = []\n"
-            "for rank, estimator in enumerate(\n"
-            "    benchmark_result.ranked_estimators,\n"
-            "    start=1,\n"
-            "):\n"
-            "    ranking_rows.append(\n"
-            "        {\n"
-            "            'rank': rank,\n"
-            "            'estimator_key': estimator.estimator_key,\n"
-            "            'estimator_name': estimator.estimator_name,\n"
-            "        }\n"
-            "    )\n\n"
-            "    for metric_key in estimator.metric_keys:\n"
-            "        metric_summary = estimator.metric_summaries[metric_key]\n"
-            "        ranking_rows[-1][f'{metric_key}_mean'] = metric_summary.mean_score\n"
-            "        ranking_rows[-1][f'{metric_key}_std'] = metric_summary.std_score\n"
-            "        ranking_rows[-1][f'{metric_key}_fold_scores'] = ', '.join(\n"
-            "            f'{score:.4f}' for score in metric_summary.fold_scores\n"
-            "        )\n\n"
-            "ranking_table = pd.DataFrame(ranking_rows)\n"
-            "print('1) Ranked benchmark results')\n"
-            "print('Ranking metric:', benchmark_result.metric_key)\n"
-            "print('Metrics evaluated:', ', '.join(benchmark_result.metric_keys))\n"
-            "display(ranking_table)\n"
-            "print('2) Saved benchmark artefacts')\n"
-            "print(\n"
-            "    'Benchmark output directory:',\n"
-            "    benchmark_result.artifacts.benchmark_output_dir.resolve(),\n"
-            ")\n"
-            "print('Ranking CSV:', benchmark_result.artifacts.ranking_path.resolve())\n"
-            "print(\n"
-            "    'Summary JSON:',\n"
-            "    benchmark_result.artifacts.summary_path.resolve(),\n"
-            ")\n"
-            "print(\n"
-            "    'Benchmark report:',\n"
-            "    benchmark_result.artifacts.report_path.resolve(),\n"
-            ")\n"
-            "print(\n"
-            "    'PipelineProfiler input JSON:',\n"
-            "    benchmark_result.artifacts.pipeline_profiler.input_json_path."
-            "resolve(),\n"
-            ")\n"
+            "# Cell 3: per-scenario benchmark results\n"
+            "from IPython.display import Markdown, display\n\n"
+            "for scenario_run in scenario_runs:\n"
+            "    benchmark_result = scenario_run['benchmark_result']\n"
+            "    display(Markdown(f\"## Scenario: {scenario_run['scenario_label']}\"))\n"
+            "    ranking_rows = []\n"
+            "    for rank, estimator in enumerate(\n"
+            "        benchmark_result.ranked_estimators,\n"
+            "        start=1,\n"
+            "    ):\n"
+            "        ranking_rows.append(\n"
+            "            {\n"
+            "                'rank': rank,\n"
+            "                'estimator_key': estimator.estimator_key,\n"
+            "                'estimator_name': estimator.estimator_name,\n"
+            "            }\n"
+            "        )\n"
+            "        for metric_key in estimator.metric_keys:\n"
+            "            metric_summary = estimator.metric_summaries[metric_key]\n"
+            "            ranking_rows[-1][f'{metric_key}_mean'] = metric_summary.mean_score\n"
+            "            ranking_rows[-1][f'{metric_key}_std'] = metric_summary.std_score\n"
+            "            ranking_rows[-1][f'{metric_key}_fold_scores'] = ', '.join(\n"
+            "                f'{score:.4f}' for score in metric_summary.fold_scores\n"
+            "            )\n"
+            "    ranking_table = pd.DataFrame(ranking_rows)\n"
+            "    print('Ranking metric:', benchmark_result.metric_key)\n"
+            "    print('Metrics evaluated:', ', '.join(benchmark_result.metric_keys))\n"
+            "    display(ranking_table)\n"
+            "    print('Benchmark output directory:', benchmark_result.artifacts.benchmark_output_dir.resolve())\n"
+            "    print('Ranking CSV:', benchmark_result.artifacts.ranking_path.resolve())\n"
+            "    print('Summary JSON:', benchmark_result.artifacts.summary_path.resolve())\n"
+            "    print('Benchmark report:', benchmark_result.artifacts.report_path.resolve())\n"
+            "    print('PipelineProfiler input JSON:', benchmark_result.artifacts.pipeline_profiler.input_json_path.resolve())\n"
         )
 
     @staticmethod
     @beartype
     def _build_cell_four() -> str:
-        """Build notebook cell optionally plotting PipelineProfiler inline."""
+        """Build notebook cell plotting per-scenario PipelineProfiler sections."""
 
         return (
-            "# Cell 4: optional PipelineProfiler view (end-of-notebook)\n"
+            "# Cell 4: per-scenario PipelineProfiler (end-of-notebook)\n"
             "if INCLUDE_PIPELINE_PROFILER_AT_END:\n"
             "    import json\n"
             "    import PipelineProfiler\n"
             "    from PipelineProfiler import _plot_pipeline_matrix as _ppm\n"
+            "    from IPython.display import Markdown, display\n\n"
             "    def _use_global_pipeline_indices() -> None:\n"
             "        def _rename_with_global_index(pipelines):\n"
             "            for index, pipeline in enumerate(pipelines, start=1):\n"
@@ -259,25 +321,30 @@ class ClassificationBenchmarkNotebookTemplate:
             "                source = source_info.get('name', 'pipeline')\n"
             "                source_info['name'] = f'{source} #{index}'\n"
             "        _ppm.rename_pipelines = _rename_with_global_index\n"
-            "    _use_global_pipeline_indices()\n"
-            "    payload_path = (\n"
-            "        benchmark_result.artifacts.pipeline_profiler.input_json_path\n"
-            "    )\n"
-            "    with payload_path.open('r') as file:\n"
-            "        pipelines = json.load(file)\n"
-            "    if not pipelines:\n"
-            "        raise ValueError(\n"
-            "            'PipelineProfiler payload is empty. Re-run benchmark first.'\n"
+            "    _use_global_pipeline_indices()\n\n"
+            "    for scenario_run in scenario_runs:\n"
+            "        benchmark_result = scenario_run['benchmark_result']\n"
+            "        display(\n"
+            "            Markdown(\n"
+            "                f\"### PipelineProfiler: {scenario_run['scenario_label']}\"\n"
+            "            )\n"
             "        )\n"
-            "    pipelines_to_plot = pipelines[:PIPELINE_PROFILER_MAX_PIPELINES]\n"
-            "    print(\n"
-            "        'Plotting pipelines in notebook:',\n"
-            "        len(pipelines_to_plot),\n"
-            "    )\n"
-            "    PipelineProfiler.plot_pipeline_matrix(pipelines_to_plot)\n"
+            "        payload_path = benchmark_result.artifacts.pipeline_profiler.input_json_path\n"
+            "        with payload_path.open('r') as file:\n"
+            "            pipelines = json.load(file)\n"
+            "        if not pipelines:\n"
+            "            raise ValueError(\n"
+            "                'PipelineProfiler payload is empty. Re-run benchmark first.'\n"
+            "            )\n"
+            "        pipelines_to_plot = pipelines[:PIPELINE_PROFILER_MAX_PIPELINES]\n"
+            "        print(\n"
+            "            'Plotting pipelines in notebook:',\n"
+            "            len(pipelines_to_plot),\n"
+            "        )\n"
+            "        PipelineProfiler.plot_pipeline_matrix(pipelines_to_plot)\n"
             "else:\n"
             "    print(\n"
-            "        'Skipped PipelineProfiler notebook view '\n"
+            "        'Skipped PipelineProfiler notebook sections '\n"
             "        '(INCLUDE_PIPELINE_PROFILER_AT_END=False).'\n"
             "    )\n"
         )
@@ -299,10 +366,12 @@ class LongitudinalBenchmarkNotebookConfig:
         feature_groups (tuple[tuple[int, ...], ...]): Feature groups.
         non_longitudinal_features (tuple[int, ...]): Column names for non longitudinal features.
         metric_keys (tuple[str, ...]): Metric keys.
-        cv_folds (int): Cv folds.
-        validation_split (float | None): Validation split.
+        evaluation_strategy (str): Public evaluation strategy key.
+        n_splits (int): Number of folds or repeated holdout splits.
+        holdout_split (float | None): Holdout ratio, when applicable.
         random_seed (int): Random seed for reproducibility.
         silent_training_output (bool): Whether to silent training output.
+        max_parallel_candidates (int): Maximum number of concurrent candidates.
         include_pipeline_profiler_at_end (bool): Whether to include pipeline profiler at end.
         pipeline_profiler_max_pipelines (int): Pipeline profiler max pipelines.
 
@@ -313,15 +382,18 @@ class LongitudinalBenchmarkNotebookConfig:
     output_root_dir: Path
     benchmark_name: str
     excluded_estimators: tuple[str, ...]
+    hyperparameters_json: dict[str, object]
     target_column: str
     feature_columns: tuple[str, ...]
     feature_groups: tuple[tuple[int, ...], ...]
     non_longitudinal_features: tuple[int, ...]
     metric_keys: tuple[str, ...]
-    cv_folds: int
-    validation_split: float | None
+    evaluation_strategy: str
+    n_splits: int
+    holdout_split: float | None
     random_seed: int
     silent_training_output: bool
+    max_parallel_candidates: int
     include_pipeline_profiler_at_end: bool
     pipeline_profiler_max_pipelines: int = 5
 
@@ -390,16 +462,19 @@ class LongitudinalBenchmarkNotebookTemplate:
             f"OUTPUT_ROOT_DIR = Path({repr(str(config.output_root_dir.resolve()))})\n"
             f"BENCHMARK_NAME = {repr(config.benchmark_name)}\n"
             f"EXCLUDED_ESTIMATORS = {repr(list(config.excluded_estimators))}\n"
+            f"HYPERPARAMETERS_JSON = {repr(config.hyperparameters_json)}\n"
             f"TARGET_COLUMN = {repr(config.target_column)}\n"
             f"FEATURE_COLUMNS = {repr(list(config.feature_columns))}\n"
             f"FEATURE_GROUPS = {repr([list(group) for group in config.feature_groups])}\n"
             "NON_LONGITUDINAL_FEATURES = "
             f"{repr(list(config.non_longitudinal_features))}\n"
             f"METRIC_KEYS = {repr(list(config.metric_keys))}\n"
-            f"CV_FOLDS = {config.cv_folds}\n"
-            f"VALIDATION_SPLIT = {repr(config.validation_split)}\n"
+            f"EVALUATION_STRATEGY = {repr(config.evaluation_strategy)}\n"
+            f"N_SPLITS = {config.n_splits}\n"
+            f"HOLDOUT_SPLIT = {repr(config.holdout_split)}\n"
             f"RANDOM_SEED = {config.random_seed}\n"
             f"SILENT_TRAINING_OUTPUT = {config.silent_training_output}\n"
+            f"MAX_PARALLEL_CANDIDATES = {config.max_parallel_candidates}\n"
             "INCLUDE_PIPELINE_PROFILER_AT_END = "
             f"{config.include_pipeline_profiler_at_end}\n"
             "PIPELINE_PROFILER_MAX_PIPELINES = "
@@ -419,6 +494,9 @@ class LongitudinalBenchmarkNotebookTemplate:
             ")\n"
             "from ldt.machine_learning.tools.longitudinal_machine_learning.target_encoding import (\n"
             "    LongitudinalTargetEncoder,\n"
+            ")\n"
+            "from ldt.machine_learning.support.runtime_validation import (\n"
+            "    filter_supported_hyperparameters,\n"
             ")\n"
             "from ldt.machine_learning.tools.target_scenarios import TargetScenarioPlanner\n"
             "from ldt.machine_learning.tools.templates import (\n"
@@ -454,6 +532,10 @@ class LongitudinalBenchmarkNotebookTemplate:
             "                ).full_name,\n"
             "                estimator=estimator_template.build_estimator(\n"
             "                    random_seed=random_seed,\n"
+            "                    hyperparameters=filter_supported_hyperparameters(\n"
+            "                        estimator_template=estimator_template,\n"
+            "                        hyperparameter_overrides=HYPERPARAMETERS_JSON,\n"
+            "                    ),\n"
             "                    feature_groups=feature_groups,\n"
             "                    non_longitudinal_features=non_longitudinal_features,\n"
             "                    feature_list_names=tuple(feature_columns),\n"
@@ -489,10 +571,12 @@ class LongitudinalBenchmarkNotebookTemplate:
             "            y=scenario.y_binary,\n"
             "            metric_keys=tuple(METRIC_KEYS),\n"
             "            output_root_dir=scenario_output_root_dir,\n"
-            "            cv_folds=CV_FOLDS,\n"
-            "            validation_split=VALIDATION_SPLIT,\n"
+            "            n_splits=N_SPLITS,\n"
+            "            evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "            holdout_split=HOLDOUT_SPLIT,\n"
             "            random_seed=RANDOM_SEED,\n"
             "            silent_training_output=SILENT_TRAINING_OUTPUT,\n"
+            "            max_parallel_candidates=MAX_PARALLEL_CANDIDATES,\n"
             "            generate_pipeline_profiler_html=False,\n"
             "        )\n"
             "        scenario_runs.append(\n"
@@ -523,10 +607,12 @@ class LongitudinalBenchmarkNotebookTemplate:
             "        y=target_encoding_result.encoded_target,\n"
             "        metric_keys=tuple(METRIC_KEYS),\n"
             "        output_root_dir=OUTPUT_ROOT_DIR,\n"
-            "        cv_folds=CV_FOLDS,\n"
-            "        validation_split=VALIDATION_SPLIT,\n"
+            "        n_splits=N_SPLITS,\n"
+            "        evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "        holdout_split=HOLDOUT_SPLIT,\n"
             "        random_seed=RANDOM_SEED,\n"
             "        silent_training_output=SILENT_TRAINING_OUTPUT,\n"
+            "        max_parallel_candidates=MAX_PARALLEL_CANDIDATES,\n"
             "        generate_pipeline_profiler_html=False,\n"
             "    )\n"
             "    scenario_runs.append(\n"
@@ -643,10 +729,12 @@ class MixedBenchmarkNotebookConfig:
         feature_groups (tuple[tuple[int, ...], ...]): Feature groups.
         non_longitudinal_features (tuple[int, ...]): Column names for non longitudinal features.
         metric_keys (tuple[str, ...]): Metric keys.
-        cv_folds (int): Cv folds.
-        validation_split (float | None): Validation split.
+        evaluation_strategy (str): Public evaluation strategy key.
+        n_splits (int): Number of folds or repeated holdout splits.
+        holdout_split (float | None): Holdout ratio, when applicable.
         random_seed (int): Random seed for reproducibility.
         silent_training_output (bool): Whether to silent training output.
+        max_parallel_candidates (int): Maximum number of concurrent candidates.
         include_pipeline_profiler_at_end (bool): Whether to include pipeline profiler at end.
         pipeline_profiler_max_pipelines (int): Pipeline profiler max pipelines.
 
@@ -657,15 +745,18 @@ class MixedBenchmarkNotebookConfig:
     output_root_dir: Path
     benchmark_name: str
     excluded_estimators: tuple[str, ...]
+    hyperparameters_json: dict[str, object]
     target_column: str
     feature_columns: tuple[str, ...]
     feature_groups: tuple[tuple[int, ...], ...]
     non_longitudinal_features: tuple[int, ...]
     metric_keys: tuple[str, ...]
-    cv_folds: int
-    validation_split: float | None
+    evaluation_strategy: str
+    n_splits: int
+    holdout_split: float | None
     random_seed: int
     silent_training_output: bool
+    max_parallel_candidates: int
     include_pipeline_profiler_at_end: bool
     pipeline_profiler_max_pipelines: int = 5
 
@@ -734,16 +825,19 @@ class MixedBenchmarkNotebookTemplate:
             f"OUTPUT_ROOT_DIR = Path({repr(str(config.output_root_dir.resolve()))})\n"
             f"BENCHMARK_NAME = {repr(config.benchmark_name)}\n"
             f"EXCLUDED_ESTIMATORS = {repr(list(config.excluded_estimators))}\n"
+            f"HYPERPARAMETERS_JSON = {repr(config.hyperparameters_json)}\n"
             f"TARGET_COLUMN = {repr(config.target_column)}\n"
             f"FEATURE_COLUMNS = {repr(list(config.feature_columns))}\n"
             f"FEATURE_GROUPS = {repr([list(group) for group in config.feature_groups])}\n"
             "NON_LONGITUDINAL_FEATURES = "
             f"{repr(list(config.non_longitudinal_features))}\n"
             f"METRIC_KEYS = {repr(list(config.metric_keys))}\n"
-            f"CV_FOLDS = {config.cv_folds}\n"
-            f"VALIDATION_SPLIT = {repr(config.validation_split)}\n"
+            f"EVALUATION_STRATEGY = {repr(config.evaluation_strategy)}\n"
+            f"N_SPLITS = {config.n_splits}\n"
+            f"HOLDOUT_SPLIT = {repr(config.holdout_split)}\n"
             f"RANDOM_SEED = {config.random_seed}\n"
             f"SILENT_TRAINING_OUTPUT = {config.silent_training_output}\n"
+            f"MAX_PARALLEL_CANDIDATES = {config.max_parallel_candidates}\n"
             "INCLUDE_PIPELINE_PROFILER_AT_END = "
             f"{config.include_pipeline_profiler_at_end}\n"
             "PIPELINE_PROFILER_MAX_PIPELINES = "
@@ -763,6 +857,9 @@ class MixedBenchmarkNotebookTemplate:
             ")\n"
             "from ldt.machine_learning.tools.longitudinal_machine_learning.target_encoding import (\n"
             "    LongitudinalTargetEncoder,\n"
+            ")\n"
+            "from ldt.machine_learning.support.runtime_validation import (\n"
+            "    filter_supported_hyperparameters,\n"
             ")\n"
             "from ldt.machine_learning.tools.standard_machine_learning.discovery import (\n"
             "    discover_standard_estimators,\n"
@@ -802,7 +899,10 @@ class MixedBenchmarkNotebookTemplate:
             "                estimator_key=estimator_key,\n"
             '                estimator_name=f"{metadata.full_name} [standard-ml]",\n'
             "                estimator=estimator_template.build_estimator(\n"
-            "                    hyperparameters={},\n"
+            "                    hyperparameters=filter_supported_hyperparameters(\n"
+            "                        estimator_template=estimator_template,\n"
+            "                        hyperparameter_overrides=HYPERPARAMETERS_JSON,\n"
+            "                    ),\n"
             "                    random_seed=random_seed,\n"
             "                ),\n"
             "            )\n"
@@ -815,6 +915,10 @@ class MixedBenchmarkNotebookTemplate:
             '                estimator_name=f"{metadata.full_name} [longitudinal-ml]",\n'
             "                estimator=estimator_template.build_estimator(\n"
             "                    random_seed=random_seed,\n"
+            "                    hyperparameters=filter_supported_hyperparameters(\n"
+            "                        estimator_template=estimator_template,\n"
+            "                        hyperparameter_overrides=HYPERPARAMETERS_JSON,\n"
+            "                    ),\n"
             "                    feature_groups=feature_groups,\n"
             "                    non_longitudinal_features=non_longitudinal_features,\n"
             "                    feature_list_names=tuple(feature_columns),\n"
@@ -850,10 +954,12 @@ class MixedBenchmarkNotebookTemplate:
             "            y=scenario.y_binary,\n"
             "            metric_keys=tuple(METRIC_KEYS),\n"
             "            output_root_dir=scenario_output_root_dir,\n"
-            "            cv_folds=CV_FOLDS,\n"
-            "            validation_split=VALIDATION_SPLIT,\n"
+            "            n_splits=N_SPLITS,\n"
+            "            evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "            holdout_split=HOLDOUT_SPLIT,\n"
             "            random_seed=RANDOM_SEED,\n"
             "            silent_training_output=SILENT_TRAINING_OUTPUT,\n"
+            "            max_parallel_candidates=MAX_PARALLEL_CANDIDATES,\n"
             "            generate_pipeline_profiler_html=False,\n"
             "        )\n"
             "        scenario_runs.append(\n"
@@ -884,10 +990,12 @@ class MixedBenchmarkNotebookTemplate:
             "        y=target_encoding_result.encoded_target,\n"
             "        metric_keys=tuple(METRIC_KEYS),\n"
             "        output_root_dir=OUTPUT_ROOT_DIR,\n"
-            "        cv_folds=CV_FOLDS,\n"
-            "        validation_split=VALIDATION_SPLIT,\n"
+            "        n_splits=N_SPLITS,\n"
+            "        evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "        holdout_split=HOLDOUT_SPLIT,\n"
             "        random_seed=RANDOM_SEED,\n"
             "        silent_training_output=SILENT_TRAINING_OUTPUT,\n"
+            "        max_parallel_candidates=MAX_PARALLEL_CANDIDATES,\n"
             "        generate_pipeline_profiler_html=False,\n"
             "    )\n"
             "    scenario_runs.append(\n"

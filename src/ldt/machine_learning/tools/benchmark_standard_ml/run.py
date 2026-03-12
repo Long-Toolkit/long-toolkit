@@ -9,25 +9,29 @@ from beartype import beartype
 from ldt.machine_learning.catalog import resolve_technique_with_defaults
 from ldt.machine_learning.support.inputs import (
     as_bool,
+    as_optional_object,
     as_optional_string,
     as_required_int,
     as_required_string,
     load_input_dataset,
     parse_excluded_estimators,
     parse_metric_keys,
-    parse_validation_split,
+    resolve_evaluation_config,
     resolve_feature_columns,
     resolve_notebook_path,
     resolve_target_column,
     run_with_validation,
 )
 from ldt.machine_learning.support.runtime_validation import (
-    validate_cv_split_feasibility,
+    filter_supported_hyperparameters,
+    validate_evaluation_split_feasibility,
+    validate_one_vs_rest_evaluation_splits,
 )
 from ldt.machine_learning.tools.metrics import list_supported_metrics
 from ldt.machine_learning.tools.standard_machine_learning.discovery import (
     discover_standard_estimators,
 )
+from ldt.machine_learning.tools.target_scenarios import TargetScenarioPlanner
 from ldt.machine_learning.tools.templates import (
     BenchmarkEstimatorSpec,
     ClassificationBenchmarkTemplate,
@@ -69,8 +73,9 @@ class BenchmarkStandardML(MachineLearningTool):
             feature_columns="age,sex,sleep_score,anxiety_score",
             excluded_estimators="",
             metric_keys="accuracy,roc_auc",
-            cv_folds=5,
-            validation_split="none",
+            evaluation_strategy="cross_validation",
+            n_splits=5,
+            multiclass_mode="multiclass",
             random_seed=42,
         )
         ```
@@ -98,8 +103,10 @@ class BenchmarkStandardML(MachineLearningTool):
                 - `params` (Mapping[str, Any] | None): Optional parameter object.
                 - for `run_benchmark`, expected keys include:
                   `input_path`, `target_column`, `feature_columns`,
-                  `excluded_estimators`, `metric_keys`, `cv_folds`,
-                  `validation_split`, `random_seed`, `output_root_dir`,
+                  `excluded_estimators`, `metric_keys`, `evaluation_strategy`,
+                  `n_splits`, `holdout_split`, `multiclass_mode`, `random_seed`,
+                  `output_root_dir`, `max_parallel_candidates`,
+                  `hyperparameters_json`,
                   `silent_training_output`, `generate_notebook`,
                   `notebook_output_path`,
                   `include_pipeline_profiler_at_end`, and
@@ -145,8 +152,10 @@ class BenchmarkStandardML(MachineLearningTool):
                 `technique` and optional `params`, or direct shorthand keys for
                 `run_benchmark`:
                 `input_path`, `target_column`, `feature_columns`,
-                `excluded_estimators`, `metric_keys`, `cv_folds`,
-                `validation_split`, `random_seed`, `output_root_dir`,
+                `excluded_estimators`, `metric_keys`, `evaluation_strategy`,
+                `n_splits`, `holdout_split`, `multiclass_mode`, `random_seed`,
+                `output_root_dir`, `max_parallel_candidates`,
+                `hyperparameters_json`,
                 `silent_training_output`, `generate_notebook`,
                 `notebook_output_path`,
                 `include_pipeline_profiler_at_end`, and
@@ -210,9 +219,11 @@ def run_benchmark_standard_ml_tool(
         params (Mapping[str, Any]): Technique parameters. For `run_benchmark`,
             expected keys include:
             `input_path`, `target_column`, `feature_columns`,
-            `excluded_estimators`, `metric_keys`, `cv_folds`,
-            `validation_split`, `random_seed`; optional keys:
-            `output_root_dir`, `silent_training_output`, `generate_notebook`,
+            `excluded_estimators`, `metric_keys`, `evaluation_strategy`,
+            `n_splits`, `holdout_split`, `multiclass_mode`, `random_seed`;
+            optional keys:
+            `output_root_dir`, `max_parallel_candidates`, `hyperparameters_json`,
+            `silent_training_output`, `generate_notebook`,
             `notebook_output_path`, `include_pipeline_profiler_at_end`, and
             `generate_pipeline_profiler_html`.
 
@@ -287,6 +298,7 @@ def _run_benchmark_standard_ml_tool(
         raise InputValidationError(
             "All estimators were excluded. Include at least one estimator."
         )
+    effective_max_parallel_candidates = 1
 
     input_path = Path(as_required_string(resolved, "input_path")).expanduser()
     dataset = load_input_dataset(input_path=input_path)
@@ -313,18 +325,27 @@ def _run_benchmark_standard_ml_tool(
     y = modelling_data[target_column].copy()
 
     metric_keys = parse_metric_keys(as_required_string(resolved, "metric_keys"))
-    cv_folds = as_required_int(resolved, "cv_folds", minimum=2)
-    validation_split = parse_validation_split(
-        as_required_string(resolved, "validation_split"),
-        cv_folds=cv_folds,
+    evaluation = resolve_evaluation_config(
+        evaluation_strategy_raw=as_required_string(resolved, "evaluation_strategy"),
+        n_splits=as_required_int(resolved, "n_splits", minimum=2),
+        holdout_split_raw=as_optional_string(resolved, "holdout_split"),
     )
-    validate_cv_split_feasibility(
-        y=y,
-        cv_folds=cv_folds,
-        validation_split=validation_split,
-    )
+    multiclass_mode = as_required_string(resolved, "multiclass_mode").strip().lower()
+    if multiclass_mode not in {"multiclass", "one_vs_rest"}:
+        raise InputValidationError(
+            "multiclass_mode must be `multiclass` or `one_vs_rest`."
+        )
 
     random_seed = as_required_int(resolved, "random_seed")
+    max_parallel_candidates = as_required_int(
+        resolved,
+        "max_parallel_candidates",
+        minimum=1,
+    )
+    effective_max_parallel_candidates = min(
+        max_parallel_candidates,
+        len(included_estimators),
+    )
     silent_training_output = as_bool(
         resolved.get("silent_training_output", True),
         field_name="silent_training_output",
@@ -336,6 +357,7 @@ def _run_benchmark_standard_ml_tool(
         if output_root_raw is not None
         else Path("outputs/benchmarks/standard_ml").expanduser()
     )
+    hyperparameter_overrides = as_optional_object(resolved, "hyperparameters_json")
 
     generate_notebook = as_bool(
         resolved.get("generate_notebook", True),
@@ -361,11 +383,119 @@ def _run_benchmark_standard_ml_tool(
             estimator_key=key,
             estimator_name=resolve_component_metadata(template).full_name,
             estimator=template.build_estimator(
-                hyperparameters={},
+                hyperparameters=filter_supported_hyperparameters(
+                    estimator_template=template,
+                    hyperparameter_overrides=hyperparameter_overrides,
+                ),
                 random_seed=random_seed,
             ),
         )
         for key, template in included_estimators.items()
+    )
+
+    unique_class_count = int(y.nunique(dropna=True))
+    if unique_class_count < 2:
+        raise InputValidationError(
+            "Classification requires at least two distinct target classes."
+        )
+
+    if unique_class_count > 2 and multiclass_mode == "one_vs_rest":
+        scenarios = TargetScenarioPlanner.build_one_vs_rest_scenarios(y=y)
+        validate_one_vs_rest_evaluation_splits(
+            n_splits=evaluation.n_splits,
+            evaluation_strategy=evaluation.evaluation_strategy,
+            holdout_split=evaluation.holdout_split,
+            scenarios=scenarios,
+        )
+
+        benchmark_runs: list[dict[str, Any]] = []
+        for scenario in scenarios:
+            scenario_output_root = output_root_dir / scenario.scenario_key
+            benchmark = ClassificationBenchmarkTemplate().run(
+                benchmark_name=_BENCHMARK_NAME,
+                estimator_specs=estimator_specs,
+                X=X,
+                y=scenario.y_binary,
+                metric_keys=metric_keys,
+                output_root_dir=scenario_output_root,
+                n_splits=evaluation.n_splits,
+                evaluation_strategy=evaluation.evaluation_strategy,
+                random_seed=random_seed,
+                holdout_split=evaluation.holdout_split,
+                silent_training_output=silent_training_output,
+                max_parallel_candidates=max_parallel_candidates,
+                generate_pipeline_profiler_html=generate_pipeline_profiler_html,
+            )
+            benchmark_runs.append(
+                {
+                    "scenario_key": scenario.scenario_key,
+                    "scenario_label": scenario.scenario_label,
+                    "benchmark_output_dir": str(
+                        benchmark.artifacts.benchmark_output_dir.resolve()
+                    ),
+                    "ranking_csv": str(benchmark.artifacts.ranking_path.resolve()),
+                    "summary_json": str(benchmark.artifacts.summary_path.resolve()),
+                    "report_path": str(benchmark.artifacts.report_path.resolve()),
+                    "ranked_estimators": [
+                        {
+                            "rank": idx + 1,
+                            "estimator_key": item.estimator_key,
+                            "estimator_name": item.estimator_name,
+                            "mean_score": item.mean_score,
+                            "std_score": item.std_score,
+                        }
+                        for idx, item in enumerate(benchmark.ranked_estimators)
+                    ],
+                }
+            )
+
+        saved_notebook = None
+        if notebook_path is not None:
+            notebook_cfg = StandardMLBenchmarkNotebookConfig(
+                notebook_path=notebook_path,
+                dataset_path=input_path,
+                output_root_dir=output_root_dir,
+                benchmark_name=_BENCHMARK_NAME,
+                excluded_estimators=tuple(sorted(excluded)),
+                hyperparameters_json=hyperparameter_overrides,
+                multiclass_mode=multiclass_mode,
+                target_column=target_column,
+                feature_columns=tuple(feature_columns),
+                metric_keys=metric_keys,
+                evaluation_strategy=evaluation.evaluation_strategy,
+                n_splits=evaluation.n_splits,
+                holdout_split=evaluation.holdout_split,
+                random_seed=random_seed,
+                silent_training_output=silent_training_output,
+                max_parallel_candidates=max_parallel_candidates,
+                include_pipeline_profiler_at_end=include_pipeline_profiler_at_end,
+            )
+            saved_notebook = StandardMLBenchmarkNotebookTemplate().write_notebook(
+                config=notebook_cfg
+            )
+
+        return {
+            "mode": "one_vs_rest",
+            "benchmark_name": _BENCHMARK_NAME,
+            "evaluation_strategy": evaluation.evaluation_strategy,
+            "n_splits": evaluation.n_splits,
+            "holdout_split": evaluation.holdout_split,
+            "metric_keys": list(metric_keys),
+            "max_parallel_candidates": effective_max_parallel_candidates,
+            "included_estimators": len(included_estimators),
+            "excluded_estimators": sorted(excluded),
+            "runs": benchmark_runs,
+            "scenario_count": len(benchmark_runs),
+            "output_root_dir": str(output_root_dir.resolve()),
+            "notebook_path": (str(saved_notebook.resolve()) if saved_notebook else None),
+            "dropped_rows": int(len(dataset) - len(modelling_data)),
+        }
+
+    validate_evaluation_split_feasibility(
+        y=y,
+        n_splits=evaluation.n_splits,
+        evaluation_strategy=evaluation.evaluation_strategy,
+        holdout_split=evaluation.holdout_split,
     )
 
     benchmark = ClassificationBenchmarkTemplate().run(
@@ -375,10 +505,12 @@ def _run_benchmark_standard_ml_tool(
         y=y,
         metric_keys=metric_keys,
         output_root_dir=output_root_dir,
-        cv_folds=cv_folds,
+        n_splits=evaluation.n_splits,
+        evaluation_strategy=evaluation.evaluation_strategy,
         random_seed=random_seed,
-        validation_split=validation_split,
+        holdout_split=evaluation.holdout_split,
         silent_training_output=silent_training_output,
+        max_parallel_candidates=max_parallel_candidates,
         generate_pipeline_profiler_html=generate_pipeline_profiler_html,
     )
 
@@ -390,13 +522,17 @@ def _run_benchmark_standard_ml_tool(
             output_root_dir=output_root_dir,
             benchmark_name=_BENCHMARK_NAME,
             excluded_estimators=tuple(sorted(excluded)),
+            hyperparameters_json=hyperparameter_overrides,
+            multiclass_mode=multiclass_mode,
             target_column=target_column,
             feature_columns=tuple(feature_columns),
             metric_keys=metric_keys,
-            cv_folds=cv_folds,
-            validation_split=validation_split,
+            evaluation_strategy=evaluation.evaluation_strategy,
+            n_splits=evaluation.n_splits,
+            holdout_split=evaluation.holdout_split,
             random_seed=random_seed,
             silent_training_output=silent_training_output,
+            max_parallel_candidates=max_parallel_candidates,
             include_pipeline_profiler_at_end=include_pipeline_profiler_at_end,
         )
         saved_notebook = StandardMLBenchmarkNotebookTemplate().write_notebook(
@@ -415,9 +551,14 @@ def _run_benchmark_standard_ml_tool(
     ]
 
     return {
+        "mode": "multiclass",
         "benchmark_name": _BENCHMARK_NAME,
         "metric_key": benchmark.metric_key,
         "metric_keys": list(benchmark.metric_keys),
+        "evaluation_strategy": benchmark.evaluation_strategy,
+        "n_splits": benchmark.n_splits,
+        "holdout_split": benchmark.holdout_split,
+        "max_parallel_candidates": benchmark.max_parallel_candidates,
         "included_estimators": len(included_estimators),
         "excluded_estimators": sorted(excluded),
         "ranked_estimators": ranking,

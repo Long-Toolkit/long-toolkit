@@ -82,9 +82,10 @@ class ClassificationExperimentResult:
         metric_key (str): Identifier for metric key.
         metric_keys (tuple[str, ...]): Metric keys.
         random_seed (int): Random seed for reproducibility.
-        cv_folds (int): Cv folds.
-        validation_split (float): Validation split.
-        split_strategy (str): Split strategy.
+        n_splits (int): Number of folds or repeated holdout splits.
+        evaluation_strategy (str): Public evaluation strategy key.
+        holdout_split (float | None): Holdout ratio, when applicable.
+        split_strategy (str): Internal sklearn splitter key.
         silent_training_output (bool): Whether to silent training output.
         fold_scores (tuple[float, ...]): Fold scores.
         mean_score (float): Mean score.
@@ -101,8 +102,9 @@ class ClassificationExperimentResult:
     metric_key: str
     metric_keys: tuple[str, ...]
     random_seed: int
-    cv_folds: int
-    validation_split: float
+    n_splits: int
+    evaluation_strategy: str
+    holdout_split: float | None
     split_strategy: str
     silent_training_output: bool
     fold_scores: tuple[float, ...]
@@ -134,10 +136,12 @@ class ClassificationExperimentTemplate:
         metric_key: str | None = None,
         metric_keys: tuple[str, ...] | None = None,
         output_dir: Path,
-        cv_folds: int = 10,
+        n_splits: int = 10,
+        evaluation_strategy: str = "cross_validation",
+        holdout_split: float | None = None,
         random_seed: int | None = None,
-        validation_split: float | None = None,
         silent_training_output: bool = False,
+        show_progress: bool = True,
     ) -> ClassificationExperimentResult:
         """Execute a classification experiment.
 
@@ -149,18 +153,20 @@ class ClassificationExperimentTemplate:
             metric_key (str | None): Identifier for metric key.
             metric_keys (tuple[str, ...] | None): Metric keys.
             output_dir (Path): Filesystem location for output dir.
-            cv_folds (int): Cv folds.
+            n_splits (int): Number of folds or repeated holdout splits.
+            evaluation_strategy (str): Public evaluation strategy key.
+            holdout_split (float | None): Holdout ratio, when applicable.
             random_seed (int | None): Random seed for reproducibility.
-            validation_split (float | None): Validation split.
             silent_training_output (bool): Boolean option that controls behaviour.
+            show_progress (bool): Whether to render progress output.
 
         Returns:
             ClassificationExperimentResult: Result object for this operation.
         """
 
-        if cv_folds < 2:
-            raise InputValidationError("Cross-validation folds must be >= 2.")
-        if len(y) < cv_folds:
+        if n_splits < 2:
+            raise InputValidationError("n_splits must be >= 2.")
+        if evaluation_strategy == "cross_validation" and len(y) < n_splits:
             raise InputValidationError(
                 "Cross-validation folds cannot exceed the number of samples."
             )
@@ -176,14 +182,15 @@ class ClassificationExperimentTemplate:
 
         (
             cv,
-            resolved_validation_split,
+            resolved_holdout_split,
             split_strategy,
         ) = self._build_splitter(
             y=y,
-            cv_folds=cv_folds,
+            n_splits=n_splits,
+            evaluation_strategy=evaluation_strategy,
+            holdout_split=holdout_split,
             min_class_count=min_class_count,
             random_seed=seed,
-            validation_split=validation_split,
         )
         resolved_metrics = self._resolve_metrics(
             metric_key=metric_key,
@@ -198,17 +205,11 @@ class ClassificationExperimentTemplate:
         validation_y_true: list[np.ndarray] = []
         validation_y_pred: list[np.ndarray] = []
 
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TimeElapsedColumn(),
-            transient=False,
-        ) as progress:
-            task_id = progress.add_task(
-                "Running cross-validation folds...",
-                total=cv_folds + 2,
-            )
+        def _run_with_progress(
+            *,
+            progress: Progress | None = None,
+            task_id: object | None = None,
+        ) -> ClassificationExperimentResult:
             try:
                 for fold_index, (train_indices, test_indices) in enumerate(
                     cv.split(X, y),
@@ -240,14 +241,15 @@ class ClassificationExperimentTemplate:
                         fold_predictions = np.asarray(fold_model.predict(X_test))
                     validation_y_true.append(np.asarray(y_test))
                     validation_y_pred.append(fold_predictions)
-                    progress.update(
-                        task_id,
-                        advance=1,
-                        description=(
-                            "Running cross-validation folds... "
-                            f"({fold_index}/{cv_folds})"
-                        ),
-                    )
+                    if progress is not None and task_id is not None:
+                        progress.update(
+                            task_id,
+                            advance=1,
+                            description=(
+                                "Running cross-validation folds... "
+                                f"({fold_index}/{n_splits})"
+                            ),
+                        )
             except ValueError as exc:
                 raise InputValidationError(
                     "Cross-validation failed for the selected metric/estimator "
@@ -281,18 +283,21 @@ class ClassificationExperimentTemplate:
                 zero_division=0,
                 output_dict=True,
             )
-            progress.update(task_id, description="Training final model...")
+            if progress is not None and task_id is not None:
+                progress.update(task_id, description="Training final model...")
             with self._silence_training_output(enabled=silent_training_output):
                 fitted_estimator = self._clone_model(model=model).fit(X, y)
-            progress.update(task_id, advance=1, description="Writing artefacts...")
+            if progress is not None and task_id is not None:
+                progress.update(task_id, advance=1, description="Writing artefacts...")
             artifacts = self._write_artifacts(
                 estimator_name=estimator_name,
                 metric_key=primary_metric_key,
                 metric_keys=resolved_metric_keys,
                 output_dir=output_dir,
-                cv_folds=cv_folds,
+                n_splits=n_splits,
+                evaluation_strategy=evaluation_strategy,
                 random_seed=seed,
-                validation_split=resolved_validation_split,
+                holdout_split=resolved_holdout_split,
                 split_strategy=split_strategy,
                 silent_training_output=silent_training_output,
                 fold_scores=primary_metric_summary.fold_scores,
@@ -301,26 +306,44 @@ class ClassificationExperimentTemplate:
                 fitted_estimator=fitted_estimator,
                 class_distribution=y.value_counts(dropna=False).to_dict(),
             )
-            progress.update(task_id, advance=1, description="Done")
+            if progress is not None and task_id is not None:
+                progress.update(task_id, advance=1, description="Done")
 
-        return ClassificationExperimentResult(
-            estimator_name=estimator_name,
-            metric_key=primary_metric_key,
-            metric_keys=resolved_metric_keys,
-            random_seed=seed,
-            cv_folds=cv_folds,
-            validation_split=resolved_validation_split,
-            split_strategy=split_strategy,
-            silent_training_output=silent_training_output,
-            fold_scores=primary_metric_summary.fold_scores,
-            mean_score=primary_metric_summary.mean_score,
-            std_score=primary_metric_summary.std_score,
-            metric_summaries=metric_summaries,
-            classification_report_text=report_text,
-            classification_report_dict=report_dict,
-            fitted_estimator=fitted_estimator,
-            artifacts=artifacts,
-        )
+            return ClassificationExperimentResult(
+                estimator_name=estimator_name,
+                metric_key=primary_metric_key,
+                metric_keys=resolved_metric_keys,
+                random_seed=seed,
+                n_splits=n_splits,
+                evaluation_strategy=evaluation_strategy,
+                holdout_split=resolved_holdout_split,
+                split_strategy=split_strategy,
+                silent_training_output=silent_training_output,
+                fold_scores=primary_metric_summary.fold_scores,
+                mean_score=primary_metric_summary.mean_score,
+                std_score=primary_metric_summary.std_score,
+                metric_summaries=metric_summaries,
+                classification_report_text=report_text,
+                classification_report_dict=report_dict,
+                fitted_estimator=fitted_estimator,
+                artifacts=artifacts,
+            )
+
+        if not show_progress:
+            return _run_with_progress()
+
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TimeElapsedColumn(),
+            transient=False,
+        ) as progress:
+            task_id = progress.add_task(
+                "Running cross-validation folds...",
+                total=n_splits + 2,
+            )
+            return _run_with_progress(progress=progress, task_id=task_id)
 
     @staticmethod
     @beartype
@@ -387,62 +410,71 @@ class ClassificationExperimentTemplate:
     def _build_splitter(
         *,
         y: pd.Series,
-        cv_folds: int,
+        n_splits: int,
+        evaluation_strategy: str,
+        holdout_split: float | None,
         min_class_count: int,
         random_seed: int,
-        validation_split: float | None,
-    ) -> tuple[StratifiedKFold | StratifiedShuffleSplit, float, str]:
+    ) -> tuple[StratifiedKFold | StratifiedShuffleSplit, float | None, str]:
         """Build and validate the CV splitter used by the experiment run."""
 
-        if validation_split is None:
-            if cv_folds > min_class_count:
+        if evaluation_strategy == "cross_validation":
+            if n_splits > min_class_count:
                 raise InputValidationError(
                     "Cross-validation folds exceed the smallest class count "
                     f"({min_class_count})."
                 )
             return (
                 StratifiedKFold(
-                    n_splits=cv_folds,
+                    n_splits=n_splits,
                     shuffle=True,
                     random_state=random_seed,
                 ),
-                1.0 / float(cv_folds),
+                None,
                 "stratified_kfold",
             )
 
-        if not 0.0 < validation_split < 1.0:
+        if evaluation_strategy != "holdout":
             raise InputValidationError(
-                "Validation split must be a float strictly between 0 and 1."
+                "evaluation_strategy must be `cross_validation` or `holdout`."
+            )
+        if holdout_split is None:
+            raise InputValidationError(
+                "holdout_split is required when evaluation_strategy is `holdout`."
+            )
+        if not 0.0 < holdout_split < 1.0:
+            raise InputValidationError(
+                "holdout_split must be a float strictly between 0 and 1."
             )
 
         class_count = int(y.nunique(dropna=True))
         sample_count = len(y)
-        validation_sample_count = int(np.ceil(validation_split * sample_count))
+        validation_sample_count = int(np.ceil(holdout_split * sample_count))
         train_sample_count = sample_count - validation_sample_count
         if validation_sample_count < class_count:
             raise InputValidationError(
-                "Validation split is too small for stratification: validation "
+                "Holdout split is too small for stratification: validation "
                 "samples per split must be at least the number of classes "
                 f"({class_count})."
             )
         if train_sample_count < class_count:
             raise InputValidationError(
-                "Validation split is too large for stratification: training "
+                "Holdout split is too large for stratification: training "
                 "samples per split must be at least the number of classes "
                 f"({class_count})."
             )
         if min_class_count < 2:
             raise InputValidationError(
-                "Validation split requires at least 2 samples in each class."
+                "Holdout evaluation requires at least 2 samples in each class."
             )
 
         return (
             StratifiedShuffleSplit(
-                n_splits=cv_folds,
-                test_size=validation_split,
+                n_splits=n_splits,
+                test_size=holdout_split,
                 random_state=random_seed,
             ),
-            float(validation_split),
+            float(holdout_split),
             "stratified_shuffle_split",
         )
 
@@ -524,9 +556,10 @@ class ClassificationExperimentTemplate:
         metric_key: str,
         metric_keys: tuple[str, ...],
         output_dir: Path,
-        cv_folds: int,
+        n_splits: int,
+        evaluation_strategy: str,
         random_seed: int,
-        validation_split: float,
+        holdout_split: float | None,
         split_strategy: str,
         silent_training_output: bool,
         fold_scores: tuple[float, ...],
@@ -542,8 +575,10 @@ class ClassificationExperimentTemplate:
             metric_key: Primary metric key used for scoring.
             metric_keys: Ordered metric keys evaluated for scoring.
             output_dir: Artefact output directory.
-            cv_folds: Number of CV folds.
+            n_splits: Number of folds or repeated holdout splits.
+            evaluation_strategy: Public evaluation strategy key.
             random_seed: Random seed used for experiment.
+            holdout_split: Holdout ratio, when applicable.
             fold_scores: Per-fold primary-metric scores.
             metric_summaries: Per-metric fold/mean/std summaries.
             report_text: Classification report text.
@@ -578,9 +613,12 @@ class ClassificationExperimentTemplate:
             "estimator": estimator_name,
             "metric_of_interest": metric_key,
             "metrics_of_interest": list(metric_keys),
-            "cross_validation_folds": cv_folds,
+            "evaluation_strategy": evaluation_strategy,
+            "n_splits": n_splits,
             "random_seed": random_seed,
-            "validation_split": float(validation_split),
+            "holdout_split": (
+                float(holdout_split) if holdout_split is not None else None
+            ),
             "split_strategy": split_strategy,
             "silent_training_output": bool(silent_training_output),
             "fold_scores": [float(score) for score in fold_scores],

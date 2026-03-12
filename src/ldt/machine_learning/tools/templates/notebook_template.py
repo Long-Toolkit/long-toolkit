@@ -25,8 +25,9 @@ class ClassificationNotebookConfig:
         target_column (str): Column name for target column.
         feature_columns (tuple[str, ...]): Column names for feature columns.
         metric_keys (tuple[str, ...]): Metric keys.
-        cv_folds (int): Cv folds.
-        validation_split (float | None): Validation split.
+        evaluation_strategy (str): Public evaluation strategy key.
+        n_splits (int): Number of folds or repeated holdout splits.
+        holdout_split (float | None): Holdout ratio, when applicable.
         random_seed (int): Random seed for reproducibility.
         silent_training_output (bool): Whether to silent training output.
 
@@ -42,8 +43,9 @@ class ClassificationNotebookConfig:
     target_column: str
     feature_columns: tuple[str, ...]
     metric_keys: tuple[str, ...]
-    cv_folds: int
-    validation_split: float | None
+    evaluation_strategy: str
+    n_splits: int
+    holdout_split: float | None
     random_seed: int
     silent_training_output: bool
 
@@ -112,8 +114,9 @@ class ClassificationExperimentNotebookTemplate:
             f"TARGET_COLUMN = {repr(config.target_column)}\n"
             f"FEATURE_COLUMNS = {repr(list(config.feature_columns))}\n"
             f"METRIC_KEYS = {repr(list(config.metric_keys))}\n"
-            f"CV_FOLDS = {config.cv_folds}\n"
-            f"VALIDATION_SPLIT = {repr(config.validation_split)}\n"
+            f"EVALUATION_STRATEGY = {repr(config.evaluation_strategy)}\n"
+            f"N_SPLITS = {config.n_splits}\n"
+            f"HOLDOUT_SPLIT = {repr(config.holdout_split)}\n"
             f"RANDOM_SEED = {config.random_seed}\n"
             f"SILENT_TRAINING_OUTPUT = {config.silent_training_output}\n"
         )
@@ -146,8 +149,9 @@ class ClassificationExperimentNotebookTemplate:
             "    y=y,\n"
             "    metric_keys=tuple(METRIC_KEYS),\n"
             "    output_dir=OUTPUT_DIR,\n"
-            "    cv_folds=CV_FOLDS,\n"
-            "    validation_split=VALIDATION_SPLIT,\n"
+            "    n_splits=N_SPLITS,\n"
+            "    evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "    holdout_split=HOLDOUT_SPLIT,\n"
             "    random_seed=RANDOM_SEED,\n"
             "    silent_training_output=SILENT_TRAINING_OUTPUT,\n"
             ")\n"

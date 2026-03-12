@@ -10,27 +10,30 @@ import pandas as pd
 from ldt.utils.errors import InputValidationError
 
 
-def validate_one_vs_rest_cv_folds(
+def validate_one_vs_rest_evaluation_splits(
     *,
-    cv_folds: int,
-    validation_split: float | None,
+    n_splits: int,
+    evaluation_strategy: str,
+    holdout_split: float | None,
     scenarios: tuple[Any, ...],
 ) -> None:
     """Validate split configuration across one-vs-rest scenarios.
 
     Args:
-        cv_folds (int): Requested number of cross-validation folds.
-        validation_split (float | None): Optional validation split fraction.
+        n_splits (int): Requested number of folds or repeated holdout splits.
+        evaluation_strategy (str): Public evaluation strategy key.
+        holdout_split (float | None): Optional holdout split fraction.
         scenarios (tuple[Any, ...]): One-vs-rest scenario payloads.
     """
 
     invalid_scenarios: list[str] = []
     for scenario in scenarios:
         try:
-            validate_cv_split_feasibility(
+            validate_evaluation_split_feasibility(
                 y=scenario.y_binary,
-                cv_folds=cv_folds,
-                validation_split=validation_split,
+                n_splits=n_splits,
+                evaluation_strategy=evaluation_strategy,
+                holdout_split=holdout_split,
             )
         except InputValidationError as exc:
             invalid_scenarios.append(f"{scenario.scenario_key} ({str(exc).strip()})")
@@ -42,18 +45,20 @@ def validate_one_vs_rest_cv_folds(
         )
 
 
-def validate_cv_split_feasibility(
+def validate_evaluation_split_feasibility(
     *,
     y: pd.Series,
-    cv_folds: int,
-    validation_split: float | None,
+    n_splits: int,
+    evaluation_strategy: str,
+    holdout_split: float | None,
 ) -> None:
     """Validate split feasibility for either k-fold or shuffle split.
 
     Args:
         y (pd.Series): Target labels to validate.
-        cv_folds (int): Requested number of cross-validation folds.
-        validation_split (float | None): Optional validation split fraction.
+        n_splits (int): Requested number of folds or repeated holdout splits.
+        evaluation_strategy (str): Public evaluation strategy key.
+        holdout_split (float | None): Optional holdout split fraction.
     """
 
     if y.nunique(dropna=True) < 2:
@@ -62,17 +67,25 @@ def validate_cv_split_feasibility(
         )
 
     min_class_count = int(y.value_counts(dropna=False).min())
-    if validation_split is None:
-        if cv_folds > min_class_count:
+    if evaluation_strategy == "cross_validation":
+        if n_splits > min_class_count:
             raise InputValidationError(
                 "Cross-validation folds exceed the smallest class count "
                 f"({min_class_count}). Reduce folds or rebalance data."
             )
         return
+    if evaluation_strategy != "holdout":
+        raise InputValidationError(
+            "evaluation_strategy must be `cross_validation` or `holdout`."
+        )
+    if holdout_split is None:
+        raise InputValidationError(
+            "holdout_split is required when evaluation_strategy is `holdout`."
+        )
 
     class_count = int(y.nunique(dropna=True))
     sample_count = len(y)
-    validation_sample_count = int(np.ceil(validation_split * sample_count))
+    validation_sample_count = int(np.ceil(holdout_split * sample_count))
     train_sample_count = sample_count - validation_sample_count
     if validation_sample_count < class_count:
         raise InputValidationError(
@@ -86,7 +99,7 @@ def validate_cv_split_feasibility(
         )
     if min_class_count < 2:
         raise InputValidationError(
-            "Validation split requires at least 2 samples in each class."
+            "Holdout evaluation requires at least 2 samples in each class."
         )
 
 
@@ -122,6 +135,32 @@ def resolve_estimator_init_kwargs(
     return init_kwargs
 
 
+def filter_supported_hyperparameters(
+    *,
+    estimator_template: Any,
+    hyperparameter_overrides: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Filter overrides down to the hyperparameters supported by a template.
+
+    Args:
+        estimator_template (Any): Template exposing `supports_hyperparameter(...)`.
+        hyperparameter_overrides (Mapping[str, Any]): User-provided overrides.
+
+    Returns:
+        dict[str, Any]: Supported override mapping for this estimator only.
+    """
+
+    supports = getattr(estimator_template, "supports_hyperparameter", None)
+    if not callable(supports):
+        return {}
+
+    return {
+        key: value
+        for key, value in hyperparameter_overrides.items()
+        if supports(key)
+    }
+
+
 def public_estimator_module(*, estimator_template: Any) -> str:
     """Resolve a public scikit-learn import module for estimator classes.
 
@@ -139,8 +178,9 @@ def public_estimator_module(*, estimator_template: Any) -> str:
 
 
 __all__ = [
+    "filter_supported_hyperparameters",
     "public_estimator_module",
     "resolve_estimator_init_kwargs",
-    "validate_cv_split_feasibility",
-    "validate_one_vs_rest_cv_folds",
+    "validate_evaluation_split_feasibility",
+    "validate_one_vs_rest_evaluation_splits",
 ]

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from datetime import datetime
@@ -145,10 +146,12 @@ class ClassificationBenchmarkResult:
         metric_key (str): Identifier for metric key.
         metric_keys (tuple[str, ...]): Metric keys.
         random_seed (int): Random seed for reproducibility.
-        cv_folds (int): Cv folds.
-        validation_split (float): Validation split.
-        split_strategy (str): Split strategy.
+        n_splits (int): Number of folds or repeated holdout splits.
+        evaluation_strategy (str): Public evaluation strategy key.
+        holdout_split (float | None): Holdout ratio, when applicable.
+        split_strategy (str): Internal sklearn splitter key.
         silent_training_output (bool): Whether to silent training output.
+        max_parallel_candidates (int): Maximum number of concurrent candidates.
         ranked_estimators (tuple[BenchmarkEstimatorResult, ...]): Ranked estimators.
         skipped_estimators (tuple[BenchmarkSkippedEstimator, ...]): Skipped estimators.
         artifacts (ClassificationBenchmarkArtifacts): Artefacts.
@@ -159,13 +162,24 @@ class ClassificationBenchmarkResult:
     metric_key: str
     metric_keys: tuple[str, ...]
     random_seed: int
-    cv_folds: int
-    validation_split: float
+    n_splits: int
+    evaluation_strategy: str
+    holdout_split: float | None
     split_strategy: str
     silent_training_output: bool
+    max_parallel_candidates: int
     ranked_estimators: tuple[BenchmarkEstimatorResult, ...]
     skipped_estimators: tuple[BenchmarkSkippedEstimator, ...]
     artifacts: ClassificationBenchmarkArtifacts
+
+
+@beartype
+@dataclass(frozen=True)
+class BenchmarkEstimatorExecution:
+    """Resolved benchmark execution outcome for one estimator."""
+
+    result: BenchmarkEstimatorResult
+    skipped: BenchmarkSkippedEstimator | None = None
 
 
 @beartype
@@ -353,10 +367,12 @@ class ClassificationBenchmarkTemplate:
         metric_key: str | None = None,
         metric_keys: tuple[str, ...] | None = None,
         output_root_dir: Path,
-        cv_folds: int = 10,
+        n_splits: int = 10,
+        evaluation_strategy: str = "cross_validation",
+        holdout_split: float | None = None,
         random_seed: int | None = None,
-        validation_split: float | None = None,
         silent_training_output: bool = False,
+        max_parallel_candidates: int = 1,
         generate_pipeline_profiler_html: bool = False,
     ) -> ClassificationBenchmarkResult:
         """Execute a benchmark run across multiple estimators.
@@ -369,10 +385,12 @@ class ClassificationBenchmarkTemplate:
             metric_key (str | None): Identifier for metric key.
             metric_keys (tuple[str, ...] | None): Metric keys.
             output_root_dir (Path): Filesystem location for output root dir.
-            cv_folds (int): Cv folds.
+            n_splits (int): Number of folds or repeated holdout splits.
+            evaluation_strategy (str): Public evaluation strategy key.
+            holdout_split (float | None): Holdout ratio, when applicable.
             random_seed (int | None): Random seed for reproducibility.
-            validation_split (float | None): Validation split.
             silent_training_output (bool): Boolean option that controls behaviour.
+            max_parallel_candidates (int): Maximum number of concurrent candidates.
             generate_pipeline_profiler_html (bool): Boolean option that controls behaviour.
 
         Returns:
@@ -385,6 +403,8 @@ class ClassificationBenchmarkTemplate:
         estimator_keys = [spec.estimator_key for spec in estimator_specs]
         if len(set(estimator_keys)) != len(estimator_keys):
             raise InputValidationError("Benchmark estimator keys must be unique.")
+        if max_parallel_candidates < 1:
+            raise InputValidationError("max_parallel_candidates must be >= 1.")
 
         resolved_metric_keys = self._resolve_metric_keys(
             metric_key=metric_key,
@@ -397,14 +417,9 @@ class ClassificationBenchmarkTemplate:
             if random_seed is not None
             else int(np.random.randint(0, 2_147_483_647))
         )
-        resolved_validation_split = (
-            float(validation_split)
-            if validation_split is not None
-            else (1.0 / float(cv_folds))
-        )
         split_strategy = (
             "stratified_shuffle_split"
-            if validation_split is not None
+            if evaluation_strategy == "holdout"
             else "stratified_kfold"
         )
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -418,6 +433,9 @@ class ClassificationBenchmarkTemplate:
         experiment_template = ClassificationExperimentTemplate()
         benchmark_results: list[BenchmarkEstimatorResult] = []
         skipped_estimators: list[BenchmarkSkippedEstimator] = []
+        resolved_max_parallel_candidates = min(
+            int(max_parallel_candidates), len(estimator_specs)
+        )
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -428,71 +446,83 @@ class ClassificationBenchmarkTemplate:
             task_id = progress.add_task(
                 "Running estimator benchmark...", total=len(estimator_specs) + 3
             )
-            for index, estimator_spec in enumerate(estimator_specs, start=1):
+            if resolved_max_parallel_candidates == 1:
+                for index, estimator_spec in enumerate(estimator_specs, start=1):
+                    progress.update(
+                        task_id,
+                        description=(
+                            "Running estimator benchmark... "
+                            f"({index}/{len(estimator_specs)}) "
+                            f"{estimator_spec.estimator_key}"
+                        ),
+                    )
+                    estimator_execution = self._run_estimator_spec(
+                        experiment_template=experiment_template,
+                        estimator_spec=estimator_spec,
+                        X=X,
+                        y=y,
+                        resolved_metric_keys=resolved_metric_keys,
+                        ranking_metric_key=ranking_metric_key,
+                        estimators_output_dir=estimators_output_dir,
+                        n_splits=n_splits,
+                        evaluation_strategy=evaluation_strategy,
+                        seed=seed,
+                        holdout_split=holdout_split,
+                        silent_training_output=silent_training_output,
+                        show_experiment_progress=True,
+                    )
+                    benchmark_results.append(estimator_execution.result)
+                    if estimator_execution.skipped is not None:
+                        skipped_estimators.append(estimator_execution.skipped)
+                    progress.update(task_id, advance=1)
+            else:
                 progress.update(
                     task_id,
                     description=(
                         "Running estimator benchmark... "
-                        f"({index}/{len(estimator_specs)}) "
-                        f"{estimator_spec.estimator_key}"
+                        f"(parallel={resolved_max_parallel_candidates})"
                     ),
                 )
-                try:
-                    estimator_result = experiment_template.run(
-                        estimator=estimator_spec.estimator,
-                        estimator_name=estimator_spec.estimator_name,
-                        X=X,
-                        y=y,
-                        metric_keys=resolved_metric_keys,
-                        output_dir=estimators_output_dir / estimator_spec.estimator_key,
-                        cv_folds=cv_folds,
-                        random_seed=seed,
-                        validation_split=validation_split,
-                        silent_training_output=silent_training_output,
-                    )
-                except (
-                    EstimatorMetricCompatibilityError,
-                    InputValidationError,
-                    Exception,
-                ) as exc:
-                    failure_reason = str(exc).strip() or (
-                        f"{type(exc).__name__}: estimator execution failed."
-                    )
-                    skipped_estimators.append(
-                        BenchmarkSkippedEstimator(
-                            estimator_key=estimator_spec.estimator_key,
-                            estimator_name=estimator_spec.estimator_name,
-                            reason=failure_reason,
+                with ThreadPoolExecutor(
+                    max_workers=resolved_max_parallel_candidates
+                ) as executor:
+                    future_to_spec = {
+                        executor.submit(
+                            self._run_estimator_spec,
+                            experiment_template=experiment_template,
+                            estimator_spec=estimator_spec,
+                            X=X,
+                            y=y,
+                            resolved_metric_keys=resolved_metric_keys,
+                            ranking_metric_key=ranking_metric_key,
+                            estimators_output_dir=estimators_output_dir,
+                            n_splits=n_splits,
+                            evaluation_strategy=evaluation_strategy,
+                            seed=seed,
+                            holdout_split=holdout_split,
+                            silent_training_output=silent_training_output,
+                            show_experiment_progress=False,
+                        ): estimator_spec
+                        for estimator_spec in estimator_specs
+                    }
+                    for completed_count, future in enumerate(
+                        as_completed(future_to_spec),
+                        start=1,
+                    ):
+                        estimator_execution = future.result()
+                        benchmark_results.append(estimator_execution.result)
+                        if estimator_execution.skipped is not None:
+                            skipped_estimators.append(estimator_execution.skipped)
+                        completed_spec = future_to_spec[future]
+                        progress.update(
+                            task_id,
+                            advance=1,
+                            description=(
+                                "Running estimator benchmark... "
+                                f"({completed_count}/{len(estimator_specs)}) "
+                                f"{completed_spec.estimator_key}"
+                            ),
                         )
-                    )
-                    benchmark_results.append(
-                        self._build_failed_estimator_result(
-                            estimator_key=estimator_spec.estimator_key,
-                            estimator_name=estimator_spec.estimator_name,
-                            metric_key=ranking_metric_key,
-                            metric_keys=resolved_metric_keys,
-                            cv_folds=cv_folds,
-                            output_dir=estimators_output_dir
-                            / estimator_spec.estimator_key,
-                            reason=failure_reason,
-                        )
-                    )
-                    progress.update(task_id, advance=1)
-                    continue
-                benchmark_results.append(
-                    BenchmarkEstimatorResult(
-                        estimator_key=estimator_spec.estimator_key,
-                        estimator_name=estimator_spec.estimator_name,
-                        metric_key=estimator_result.metric_key,
-                        metric_keys=estimator_result.metric_keys,
-                        fold_scores=estimator_result.fold_scores,
-                        mean_score=estimator_result.mean_score,
-                        std_score=estimator_result.std_score,
-                        metric_summaries=estimator_result.metric_summaries,
-                        artifacts=estimator_result.artifacts,
-                    )
-                )
-                progress.update(task_id, advance=1)
 
             ranked_estimators = tuple(
                 sorted(
@@ -518,10 +548,12 @@ class ClassificationBenchmarkTemplate:
                     benchmark_name=benchmark_name,
                     metric_key=ranking_metric_key,
                     metric_keys=resolved_metric_keys,
-                    cv_folds=cv_folds,
-                    validation_split=resolved_validation_split,
+                    n_splits=n_splits,
+                    evaluation_strategy=evaluation_strategy,
+                    holdout_split=holdout_split,
                     split_strategy=split_strategy,
                     silent_training_output=silent_training_output,
+                    max_parallel_candidates=resolved_max_parallel_candidates,
                     random_seed=seed,
                     ranked_estimators=ranked_estimators,
                     skipped_estimators=tuple(skipped_estimators),
@@ -578,10 +610,12 @@ class ClassificationBenchmarkTemplate:
                 metric_key=ranking_metric_key,
                 metric_keys=resolved_metric_keys,
                 random_seed=seed,
-                cv_folds=cv_folds,
-                validation_split=resolved_validation_split,
+                n_splits=n_splits,
+                evaluation_strategy=evaluation_strategy,
+                holdout_split=holdout_split,
                 split_strategy=split_strategy,
                 silent_training_output=silent_training_output,
+                max_parallel_candidates=resolved_max_parallel_candidates,
                 ranked_estimators=ranked_estimators,
                 skipped_estimators=tuple(skipped_estimators),
                 artifacts=ClassificationBenchmarkArtifacts(
@@ -600,10 +634,12 @@ class ClassificationBenchmarkTemplate:
             metric_key=ranking_metric_key,
             metric_keys=resolved_metric_keys,
             random_seed=seed,
-            cv_folds=cv_folds,
-            validation_split=resolved_validation_split,
+            n_splits=n_splits,
+            evaluation_strategy=evaluation_strategy,
+            holdout_split=holdout_split,
             split_strategy=split_strategy,
             silent_training_output=silent_training_output,
+            max_parallel_candidates=resolved_max_parallel_candidates,
             ranked_estimators=ranked_estimators,
             skipped_estimators=tuple(skipped_estimators),
             artifacts=ClassificationBenchmarkArtifacts(
@@ -613,6 +649,81 @@ class ClassificationBenchmarkTemplate:
                 report_path=report_path,
                 pipeline_profiler=pipeline_artifacts,
             ),
+        )
+
+    @staticmethod
+    @beartype
+    def _run_estimator_spec(
+        *,
+        experiment_template: ClassificationExperimentTemplate,
+        estimator_spec: BenchmarkEstimatorSpec,
+        X: pd.DataFrame,
+        y: pd.Series,
+        resolved_metric_keys: tuple[str, ...],
+        ranking_metric_key: str,
+        estimators_output_dir: Path,
+        n_splits: int,
+        evaluation_strategy: str,
+        seed: int,
+        holdout_split: float | None,
+        silent_training_output: bool,
+        show_experiment_progress: bool,
+    ) -> BenchmarkEstimatorExecution:
+        """Execute one estimator spec and normalise success/failure handling."""
+
+        try:
+            estimator_result = experiment_template.run(
+                estimator=estimator_spec.estimator,
+                estimator_name=estimator_spec.estimator_name,
+                X=X,
+                y=y,
+                metric_keys=resolved_metric_keys,
+                output_dir=estimators_output_dir / estimator_spec.estimator_key,
+                n_splits=n_splits,
+                evaluation_strategy=evaluation_strategy,
+                random_seed=seed,
+                holdout_split=holdout_split,
+                silent_training_output=silent_training_output,
+                show_progress=show_experiment_progress,
+            )
+        except (
+            EstimatorMetricCompatibilityError,
+            InputValidationError,
+            Exception,
+        ) as exc:
+            failure_reason = str(exc).strip() or (
+                f"{type(exc).__name__}: estimator execution failed."
+            )
+            skipped = BenchmarkSkippedEstimator(
+                estimator_key=estimator_spec.estimator_key,
+                estimator_name=estimator_spec.estimator_name,
+                reason=failure_reason,
+            )
+            return BenchmarkEstimatorExecution(
+                result=ClassificationBenchmarkTemplate._build_failed_estimator_result(
+                    estimator_key=estimator_spec.estimator_key,
+                    estimator_name=estimator_spec.estimator_name,
+                    metric_key=ranking_metric_key,
+                    metric_keys=resolved_metric_keys,
+                    cv_folds=n_splits,
+                    output_dir=estimators_output_dir / estimator_spec.estimator_key,
+                    reason=failure_reason,
+                ),
+                skipped=skipped,
+            )
+
+        return BenchmarkEstimatorExecution(
+            result=BenchmarkEstimatorResult(
+                estimator_key=estimator_spec.estimator_key,
+                estimator_name=estimator_spec.estimator_name,
+                metric_key=estimator_result.metric_key,
+                metric_keys=estimator_result.metric_keys,
+                fold_scores=estimator_result.fold_scores,
+                mean_score=estimator_result.mean_score,
+                std_score=estimator_result.std_score,
+                metric_summaries=estimator_result.metric_summaries,
+                artifacts=estimator_result.artifacts,
+            )
         )
 
     @staticmethod
@@ -709,7 +820,7 @@ class ClassificationBenchmarkTemplate:
                     "estimator": estimator_name,
                     "metric_of_interest": metric_key,
                     "metrics_of_interest": list(metric_keys),
-                    "cross_validation_folds": cv_folds,
+                    "n_splits": cv_folds,
                     "assigned_score": -1.0,
                     "failure_reason": reason,
                 },
@@ -767,10 +878,12 @@ class ClassificationBenchmarkTemplate:
         benchmark_name: str,
         metric_key: str,
         metric_keys: tuple[str, ...],
-        cv_folds: int,
-        validation_split: float,
+        n_splits: int,
+        evaluation_strategy: str,
+        holdout_split: float | None,
         split_strategy: str,
         silent_training_output: bool,
+        max_parallel_candidates: int,
         random_seed: int,
         ranked_estimators: tuple[BenchmarkEstimatorResult, ...],
         skipped_estimators: tuple[BenchmarkSkippedEstimator, ...],
@@ -782,10 +895,16 @@ class ClassificationBenchmarkTemplate:
             f"Benchmark: {benchmark_name}",
             f"Ranking metric: {metric_key}",
             f"Metrics evaluated: {', '.join(metric_keys)}",
-            f"Cross-validation folds: {cv_folds}",
-            f"Validation split: {validation_split:.4f}",
+            f"Evaluation strategy: {evaluation_strategy}",
+            f"Number of splits: {n_splits}",
+            (
+                "Holdout split: none"
+                if holdout_split is None
+                else f"Holdout split: {holdout_split:.4f}"
+            ),
             f"Split strategy: {split_strategy}",
             f"Silent training output: {silent_training_output}",
+            f"Max parallel candidates: {max_parallel_candidates}",
             f"Random seed: {random_seed}",
             "",
             "Ranking",
@@ -1063,10 +1182,12 @@ class ClassificationBenchmarkTemplate:
         metric_key: str,
         metric_keys: tuple[str, ...],
         random_seed: int,
-        cv_folds: int,
-        validation_split: float,
+        n_splits: int,
+        evaluation_strategy: str,
+        holdout_split: float | None,
         split_strategy: str,
         silent_training_output: bool,
+        max_parallel_candidates: int,
         ranked_estimators: tuple[BenchmarkEstimatorResult, ...],
         skipped_estimators: tuple[BenchmarkSkippedEstimator, ...],
         artifacts: ClassificationBenchmarkArtifacts,
@@ -1077,10 +1198,14 @@ class ClassificationBenchmarkTemplate:
             "benchmark_name": benchmark_name,
             "metric_of_interest": metric_key,
             "metrics_of_interest": list(metric_keys),
-            "cross_validation_folds": cv_folds,
-            "validation_split": float(validation_split),
+            "evaluation_strategy": evaluation_strategy,
+            "n_splits": n_splits,
+            "holdout_split": (
+                float(holdout_split) if holdout_split is not None else None
+            ),
             "split_strategy": split_strategy,
             "silent_training_output": bool(silent_training_output),
+            "max_parallel_candidates": int(max_parallel_candidates),
             "random_seed": random_seed,
             "benchmark_output_directory": str(artifacts.benchmark_output_dir.resolve()),
             "ranking_artifact": str(artifacts.ranking_path.resolve()),

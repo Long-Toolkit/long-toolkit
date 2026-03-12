@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Mapping
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from beartype import beartype
 from scikit_longitudinal.data_preparation import (
@@ -28,7 +30,13 @@ from ldt.machine_learning.tools.templates import EstimatorTemplate
 from ldt.utils.metadata import ComponentMetadata
 
 EstimatorBuilder = Callable[
-    [int, tuple[tuple[int, ...], ...], tuple[int, ...], tuple[str, ...]],
+    [
+        int,
+        Mapping[str, Any],
+        tuple[tuple[int, ...], ...],
+        tuple[int, ...],
+        tuple[str, ...],
+    ],
     BaseEstimator,
 ]
 
@@ -112,6 +120,7 @@ class LongitudinalEstimatorTemplate:
         cls,
         *,
         random_seed: int,
+        hyperparameters: Mapping[str, Any],
         feature_groups: tuple[tuple[int, ...], ...],
         non_longitudinal_features: tuple[int, ...],
         feature_list_names: tuple[str, ...],
@@ -123,10 +132,34 @@ class LongitudinalEstimatorTemplate:
             raise ValueError(f"{cls.__name__} does not define a builder.")
         return builder(
             random_seed,
+            hyperparameters,
             feature_groups,
             non_longitudinal_features,
             feature_list_names,
         )
+
+    @classmethod
+    @beartype
+    def supports_hyperparameter(cls, hyperparameter: str) -> bool:
+        """Check whether the downstream algorithm exposes a hyperparameter."""
+
+        builder = cls._builder
+        if builder is None:
+            return False
+
+        standard_template = getattr(builder, "_standard_template", None)
+        if (
+            isinstance(standard_template, type)
+            and issubclass(standard_template, EstimatorTemplate)
+        ):
+            return standard_template.supports_hyperparameter(hyperparameter)
+
+        estimator_cls = getattr(builder, "_estimator_cls", None)
+        if isinstance(estimator_cls, type):
+            signature = inspect.signature(estimator_cls.__init__)
+            return hyperparameter in signature.parameters
+
+        return False
 
 
 @beartype
@@ -140,12 +173,13 @@ def make_standard_primitive_builder(
     @beartype
     def _builder(
         random_seed: int,
+        hyperparameters: Mapping[str, Any],
         feature_groups: tuple[tuple[int, ...], ...],
         non_longitudinal_features: tuple[int, ...],
         feature_list_names: tuple[str, ...],
     ) -> BaseEstimator:
         primary_estimator = standard_template.build_estimator(
-            hyperparameters={},
+            hyperparameters=hyperparameters,
             random_seed=random_seed,
         )
 
@@ -225,6 +259,7 @@ def make_standard_primitive_builder(
 
         raise ValueError(f"Unsupported primitive key: {primitive_key}")
 
+    setattr(_builder, "_standard_template", standard_template)
     return _builder
 
 
@@ -238,12 +273,14 @@ def make_merwav_time_plus_longitudinal_builder(
     @beartype
     def _builder(
         random_seed: int,
+        hyperparameters: Mapping[str, Any],
         feature_groups: tuple[tuple[int, ...], ...],
         non_longitudinal_features: tuple[int, ...],
         feature_list_names: tuple[str, ...],
     ) -> BaseEstimator:
         final_estimator = _instantiate_with_random_state(
             estimator_cls=estimator_cls,
+            hyperparameters=hyperparameters,
             random_seed=random_seed,
         )
         preprocessor = MerWavTimePlus()
@@ -256,6 +293,7 @@ def make_merwav_time_plus_longitudinal_builder(
             feature_list_names=feature_list_names,
         )
 
+    setattr(_builder, "_estimator_cls", estimator_cls)
     return _builder
 
 
@@ -284,17 +322,19 @@ def _build_pipeline(
 def _instantiate_with_random_state(
     *,
     estimator_cls: type[BaseEstimator],
+    hyperparameters: Mapping[str, Any],
     random_seed: int,
 ) -> BaseEstimator:
     """Instantiate estimator while forwarding random_state when supported."""
 
     signature = inspect.signature(estimator_cls.__init__)
-    init_kwargs = {}
+    init_kwargs = dict(hyperparameters)
     if "random_state" in signature.parameters:
-        init_kwargs["random_state"] = random_seed
+        init_kwargs.setdefault("random_state", random_seed)
     if (
         estimator_cls is LexicoDeepForestClassifier
         and "longitudinal_base_estimators" in signature.parameters
+        and "longitudinal_base_estimators" not in init_kwargs
     ):
         init_kwargs["longitudinal_base_estimators"] = (
             _default_lexico_deep_forest_base_estimators()

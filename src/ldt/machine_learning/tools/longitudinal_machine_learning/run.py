@@ -9,19 +9,20 @@ from beartype import beartype
 from ldt.machine_learning.catalog import resolve_technique_with_defaults
 from ldt.machine_learning.support.inputs import (
     as_bool,
+    as_optional_object,
     as_optional_string,
     as_required_int,
     as_required_string,
     load_input_dataset,
     parse_metric_keys,
-    parse_validation_split,
+    resolve_evaluation_config,
     resolve_feature_columns,
     resolve_target_column,
     run_with_validation,
 )
 from ldt.machine_learning.support.runtime_validation import (
-    validate_cv_split_feasibility,
-    validate_one_vs_rest_cv_folds,
+    validate_evaluation_split_feasibility,
+    validate_one_vs_rest_evaluation_splits,
 )
 from ldt.machine_learning.tools.longitudinal_machine_learning.discovery import (
     discover_longitudinal_estimators,
@@ -189,8 +190,8 @@ class LongitudinalMachineLearning(MachineLearningTool):
             non_longitudinal_mode="auto",
             estimator_key="merwav_time_plus__lexico_random_forest",
             metric_keys="accuracy,f1_macro",
-            cv_folds=5,
-            validation_split="none",
+            evaluation_strategy="cross_validation",
+            n_splits=5,
             random_seed=42,
         )
         ```
@@ -232,9 +233,9 @@ class LongitudinalMachineLearning(MachineLearningTool):
                   `feature_groups`, `feature_groups_mode`,
                   `feature_groups_preset`, `feature_groups_suffix`,
                   `non_longitudinal_features`, `non_longitudinal_mode`,
-                  `estimator_key`, `metric_keys`, `cv_folds`,
-                  `validation_split`, `random_seed`, `output_dir`, and
-                  `silent_training_output`.
+                  `estimator_key`, `metric_keys`, `evaluation_strategy`,
+                  `n_splits`, `holdout_split`, `random_seed`, `output_dir`,
+                  `hyperparameters_json`, and `silent_training_output`.
                 - for `list_estimators` and `list_metrics`, no extra keys are
                   required.
                 - any additional keys are merged into `params` as direct
@@ -279,9 +280,9 @@ class LongitudinalMachineLearning(MachineLearningTool):
                 `feature_groups`, `feature_groups_mode`,
                 `feature_groups_preset`, `feature_groups_suffix`,
                 `non_longitudinal_features`, `non_longitudinal_mode`,
-                `estimator_key`, `metric_keys`, `cv_folds`,
-                `validation_split`, `random_seed`, `output_dir`,
-                and `silent_training_output`.
+                `estimator_key`, `metric_keys`, `evaluation_strategy`,
+                `n_splits`, `holdout_split`, `random_seed`, `output_dir`,
+                `hyperparameters_json`, and `silent_training_output`.
 
         Returns:
             dict[str, Any]: Technique-specific workflow result payload.
@@ -345,8 +346,10 @@ def run_longitudinal_machine_learning_tool(
             `feature_groups_mode`, `feature_groups_preset`,
             `feature_groups_suffix`, `non_longitudinal_features`,
             `non_longitudinal_mode`, `estimator_key`, `metric_keys`,
-            `cv_folds`, `validation_split`, `random_seed`; optional keys:
-            `output_dir` and `silent_training_output`.
+            `evaluation_strategy`, `n_splits`, `holdout_split`, `random_seed`;
+            optional keys:
+            `output_dir`, `hyperparameters_json`, and
+            `silent_training_output`.
 
     Returns:
         dict[str, Any]: Technique-specific serialised result payload.
@@ -467,10 +470,10 @@ def _run_longitudinal_machine_learning_tool(
     y_raw = modelling_data[target_column].copy()
 
     metric_keys = parse_metric_keys(as_required_string(resolved, "metric_keys"))
-    cv_folds = as_required_int(resolved, "cv_folds", minimum=2)
-    validation_split = parse_validation_split(
-        as_required_string(resolved, "validation_split"),
-        cv_folds=cv_folds,
+    evaluation = resolve_evaluation_config(
+        evaluation_strategy_raw=as_required_string(resolved, "evaluation_strategy"),
+        n_splits=as_required_int(resolved, "n_splits", minimum=2),
+        holdout_split_raw=as_optional_string(resolved, "holdout_split"),
     )
     random_seed = as_required_int(resolved, "random_seed")
     silent_training_output = as_bool(
@@ -484,6 +487,7 @@ def _run_longitudinal_machine_learning_tool(
         if output_dir_raw is not None
         else Path(f"outputs/longitudinal_ml/{estimator_key}").expanduser()
     )
+    hyperparameter_overrides = as_optional_object(resolved, "hyperparameters_json")
 
     unique_class_count = int(y_raw.nunique(dropna=True))
     if unique_class_count < 2:
@@ -495,9 +499,10 @@ def _run_longitudinal_machine_learning_tool(
 
     if unique_class_count > 2:
         scenarios = TargetScenarioPlanner.build_one_vs_rest_scenarios(y=y_raw)
-        validate_one_vs_rest_cv_folds(
-            cv_folds=cv_folds,
-            validation_split=validation_split,
+        validate_one_vs_rest_evaluation_splits(
+            n_splits=evaluation.n_splits,
+            evaluation_strategy=evaluation.evaluation_strategy,
+            holdout_split=evaluation.holdout_split,
             scenarios=scenarios,
         )
 
@@ -505,6 +510,7 @@ def _run_longitudinal_machine_learning_tool(
         for scenario in scenarios:
             estimator = estimator_template.build_estimator(
                 random_seed=random_seed,
+                hyperparameters=hyperparameter_overrides,
                 feature_groups=feature_vectors.feature_groups,
                 non_longitudinal_features=feature_vectors.non_longitudinal_features,
                 feature_list_names=tuple(feature_columns),
@@ -517,9 +523,10 @@ def _run_longitudinal_machine_learning_tool(
                 y=scenario.y_binary,
                 metric_keys=metric_keys,
                 output_dir=scenario_output_dir,
-                cv_folds=cv_folds,
+                n_splits=evaluation.n_splits,
+                evaluation_strategy=evaluation.evaluation_strategy,
                 random_seed=random_seed,
-                validation_split=validation_split,
+                holdout_split=evaluation.holdout_split,
                 silent_training_output=silent_training_output,
             )
             scenario_results.append(
@@ -539,6 +546,9 @@ def _run_longitudinal_machine_learning_tool(
             "mode": "one_vs_rest",
             "estimator_key": estimator_key,
             "estimator_name": estimator_name,
+            "evaluation_strategy": evaluation.evaluation_strategy,
+            "n_splits": evaluation.n_splits,
+            "holdout_split": evaluation.holdout_split,
             "scenario_count": len(scenario_results),
             "scenarios": scenario_results,
             "output_root_dir": str(output_dir.resolve()),
@@ -548,14 +558,16 @@ def _run_longitudinal_machine_learning_tool(
     target_encoding = LongitudinalTargetEncoder.encode_if_needed(y=y_raw)
     y = target_encoding.encoded_target
 
-    validate_cv_split_feasibility(
+    validate_evaluation_split_feasibility(
         y=y,
-        cv_folds=cv_folds,
-        validation_split=validation_split,
+        n_splits=evaluation.n_splits,
+        evaluation_strategy=evaluation.evaluation_strategy,
+        holdout_split=evaluation.holdout_split,
     )
 
     estimator = estimator_template.build_estimator(
         random_seed=random_seed,
+        hyperparameters=hyperparameter_overrides,
         feature_groups=feature_vectors.feature_groups,
         non_longitudinal_features=feature_vectors.non_longitudinal_features,
         feature_list_names=tuple(feature_columns),
@@ -567,9 +579,10 @@ def _run_longitudinal_machine_learning_tool(
         y=y,
         metric_keys=metric_keys,
         output_dir=output_dir,
-        cv_folds=cv_folds,
+        n_splits=evaluation.n_splits,
+        evaluation_strategy=evaluation.evaluation_strategy,
         random_seed=random_seed,
-        validation_split=validation_split,
+        holdout_split=evaluation.holdout_split,
         silent_training_output=silent_training_output,
     )
 
@@ -578,6 +591,9 @@ def _run_longitudinal_machine_learning_tool(
         "estimator_key": estimator_key,
         "estimator_name": estimator_name,
         "metric_key": result.metric_key,
+        "evaluation_strategy": evaluation.evaluation_strategy,
+        "n_splits": evaluation.n_splits,
+        "holdout_split": evaluation.holdout_split,
         "mean_score": result.mean_score,
         "std_score": result.std_score,
         "output_dir": str(output_dir.resolve()),

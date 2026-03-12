@@ -15,7 +15,7 @@ from ldt.machine_learning.support.inputs import (
     as_required_string,
     load_input_dataset,
     parse_metric_keys,
-    parse_validation_split,
+    resolve_evaluation_config,
     resolve_feature_columns,
     resolve_notebook_path,
     resolve_target_column,
@@ -24,8 +24,8 @@ from ldt.machine_learning.support.inputs import (
 from ldt.machine_learning.support.runtime_validation import (
     public_estimator_module,
     resolve_estimator_init_kwargs,
-    validate_cv_split_feasibility,
-    validate_one_vs_rest_cv_folds,
+    validate_evaluation_split_feasibility,
+    validate_one_vs_rest_evaluation_splits,
 )
 from ldt.machine_learning.tools.metrics import list_supported_metrics
 from ldt.machine_learning.tools.standard_machine_learning.discovery import (
@@ -78,8 +78,8 @@ class StandardMachineLearning(MachineLearningTool):
             feature_columns="sleep_score,anxiety_score,sex,income",
             estimator_key="random_forest",
             metric_keys="accuracy,f1_macro",
-            cv_folds=5,
-            validation_split="none",
+            evaluation_strategy="cross_validation",
+            n_splits=5,
             multiclass_mode="multiclass",
             random_seed=42,
         )
@@ -110,8 +110,8 @@ class StandardMachineLearning(MachineLearningTool):
                 - `params` (Mapping[str, Any] | None): Optional parameter object.
                 - for `run_experiment`, expected keys include:
                   `input_path`, `target_column`, `feature_columns`,
-                  `estimator_key`, `metric_keys`, `cv_folds`,
-                  `validation_split`, `random_seed`, `output_dir`,
+                  `estimator_key`, `metric_keys`, `evaluation_strategy`,
+                  `n_splits`, `holdout_split`, `random_seed`, `output_dir`,
                   `hyperparameters_json`, `multiclass_mode`,
                   `silent_training_output`, `generate_notebook`, and
                   `notebook_output_path`.
@@ -156,8 +156,8 @@ class StandardMachineLearning(MachineLearningTool):
                 `technique` and optional `params`, or direct shorthand keys for
                 `run_experiment`:
                 `input_path`, `target_column`, `feature_columns`,
-                `estimator_key`, `metric_keys`, `cv_folds`,
-                `validation_split`, `random_seed`, `output_dir`,
+                `estimator_key`, `metric_keys`, `evaluation_strategy`,
+                `n_splits`, `holdout_split`, `random_seed`, `output_dir`,
                 `hyperparameters_json`, `multiclass_mode`,
                 `silent_training_output`, `generate_notebook`,
                 and `notebook_output_path`.
@@ -221,7 +221,8 @@ def run_standard_machine_learning_tool(
         params (Mapping[str, Any]): Technique parameters. For `run_experiment`,
             expected keys include:
             `input_path`, `target_column`, `feature_columns`, `estimator_key`,
-            `metric_keys`, `cv_folds`, `validation_split`, `multiclass_mode`,
+            `metric_keys`, `evaluation_strategy`, `n_splits`, `holdout_split`,
+            `multiclass_mode`,
             `random_seed`; optional keys:
             `output_dir`, `hyperparameters_json`, `silent_training_output`,
             `generate_notebook`, and `notebook_output_path`.
@@ -323,10 +324,10 @@ def _run_standard_machine_learning_tool(
     y = modelling_data[target_column].copy()
 
     metric_keys = parse_metric_keys(as_required_string(resolved, "metric_keys"))
-    cv_folds = as_required_int(resolved, "cv_folds", minimum=2)
-    validation_split = parse_validation_split(
-        as_required_string(resolved, "validation_split"),
-        cv_folds=cv_folds,
+    evaluation = resolve_evaluation_config(
+        evaluation_strategy_raw=as_required_string(resolved, "evaluation_strategy"),
+        n_splits=as_required_int(resolved, "n_splits", minimum=2),
+        holdout_split_raw=as_optional_string(resolved, "holdout_split"),
     )
     random_seed = as_required_int(resolved, "random_seed")
     silent_training_output = as_bool(
@@ -368,9 +369,10 @@ def _run_standard_machine_learning_tool(
 
     if unique_class_count > 2 and multiclass_mode == "one_vs_rest":
         scenarios = TargetScenarioPlanner.build_one_vs_rest_scenarios(y=y)
-        validate_one_vs_rest_cv_folds(
-            cv_folds=cv_folds,
-            validation_split=validation_split,
+        validate_one_vs_rest_evaluation_splits(
+            n_splits=evaluation.n_splits,
+            evaluation_strategy=evaluation.evaluation_strategy,
+            holdout_split=evaluation.holdout_split,
             scenarios=scenarios,
         )
 
@@ -388,9 +390,10 @@ def _run_standard_machine_learning_tool(
                 y=scenario.y_binary,
                 metric_keys=metric_keys,
                 output_dir=scenario_output_dir,
-                cv_folds=cv_folds,
+                n_splits=evaluation.n_splits,
+                evaluation_strategy=evaluation.evaluation_strategy,
                 random_seed=random_seed,
-                validation_split=validation_split,
+                holdout_split=evaluation.holdout_split,
                 silent_training_output=silent_training_output,
             )
             scenario_results.append(
@@ -410,6 +413,9 @@ def _run_standard_machine_learning_tool(
             "mode": "one_vs_rest",
             "estimator_key": estimator_key,
             "estimator_name": estimator_name,
+            "evaluation_strategy": evaluation.evaluation_strategy,
+            "n_splits": evaluation.n_splits,
+            "holdout_split": evaluation.holdout_split,
             "scenario_count": len(scenario_results),
             "scenarios": scenario_results,
             "output_root_dir": str(output_dir.resolve()),
@@ -417,10 +423,11 @@ def _run_standard_machine_learning_tool(
             "dropped_rows": int(len(dataset) - len(modelling_data)),
         }
 
-    validate_cv_split_feasibility(
+    validate_evaluation_split_feasibility(
         y=y,
-        cv_folds=cv_folds,
-        validation_split=validation_split,
+        n_splits=evaluation.n_splits,
+        evaluation_strategy=evaluation.evaluation_strategy,
+        holdout_split=evaluation.holdout_split,
     )
 
     estimator = estimator_template.build_estimator(
@@ -434,9 +441,10 @@ def _run_standard_machine_learning_tool(
         y=y,
         metric_keys=metric_keys,
         output_dir=output_dir,
-        cv_folds=cv_folds,
+        n_splits=evaluation.n_splits,
+        evaluation_strategy=evaluation.evaluation_strategy,
         random_seed=random_seed,
-        validation_split=validation_split,
+        holdout_split=evaluation.holdout_split,
         silent_training_output=silent_training_output,
     )
 
@@ -462,8 +470,9 @@ def _run_standard_machine_learning_tool(
             target_column=target_column,
             feature_columns=tuple(feature_columns),
             metric_keys=metric_keys,
-            cv_folds=cv_folds,
-            validation_split=validation_split,
+            evaluation_strategy=evaluation.evaluation_strategy,
+            n_splits=evaluation.n_splits,
+            holdout_split=evaluation.holdout_split,
             random_seed=random_seed,
             silent_training_output=silent_training_output,
         )
@@ -476,6 +485,9 @@ def _run_standard_machine_learning_tool(
         "estimator_key": estimator_key,
         "estimator_name": estimator_name,
         "metric_key": result.metric_key,
+        "evaluation_strategy": evaluation.evaluation_strategy,
+        "n_splits": evaluation.n_splits,
+        "holdout_split": evaluation.holdout_split,
         "mean_score": result.mean_score,
         "std_score": result.std_score,
         "output_dir": str(output_dir.resolve()),
