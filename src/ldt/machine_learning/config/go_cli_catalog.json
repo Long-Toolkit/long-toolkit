@@ -120,7 +120,8 @@
                 "label": "One-vs-rest",
                 "value": "one_vs_rest"
               }
-            ]
+            ],
+            "hint": "Used only when the target has more than two classes. Binary targets ignore this setting."
           },
           {
             "key": "silent_training_output",
@@ -326,6 +327,24 @@
               "field": "evaluation_strategy",
               "equals": "holdout"
             }
+          },
+          {
+            "key": "multiclass_mode",
+            "label": "Multiclass mode",
+            "type": "enum",
+            "required": true,
+            "default": "multiclass",
+            "options": [
+              {
+                "label": "Multiclass",
+                "value": "multiclass"
+              },
+              {
+                "label": "One-vs-rest",
+                "value": "one_vs_rest"
+              }
+            ],
+            "hint": "Used only when the target has more than two classes. Binary targets ignore this setting."
           },
           {
             "key": "random_seed",
@@ -723,6 +742,24 @@
             }
           },
           {
+            "key": "multiclass_mode",
+            "label": "Multiclass mode",
+            "type": "enum",
+            "required": true,
+            "default": "multiclass",
+            "options": [
+              {
+                "label": "Multiclass",
+                "value": "multiclass"
+              },
+              {
+                "label": "One-vs-rest",
+                "value": "one_vs_rest"
+              }
+            ],
+            "hint": "Used only when the target has more than two classes. Binary targets ignore this setting."
+          },
+          {
             "key": "random_seed",
             "label": "Random seed",
             "type": "int",
@@ -972,6 +1009,24 @@
               "field": "evaluation_strategy",
               "equals": "holdout"
             }
+          },
+          {
+            "key": "multiclass_mode",
+            "label": "Multiclass mode",
+            "type": "enum",
+            "required": true,
+            "default": "multiclass",
+            "options": [
+              {
+                "label": "Multiclass",
+                "value": "multiclass"
+              },
+              {
+                "label": "One-vs-rest",
+                "value": "one_vs_rest"
+              }
+            ],
+            "hint": "Used only when the target has more than two classes. Binary targets ignore this setting."
           },
           {
             "key": "random_seed",

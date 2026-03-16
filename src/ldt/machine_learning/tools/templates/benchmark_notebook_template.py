@@ -361,6 +361,7 @@ class LongitudinalBenchmarkNotebookConfig:
         output_root_dir (Path): Filesystem location for output root dir.
         benchmark_name (str): Name for benchmark.
         excluded_estimators (tuple[str, ...]): Excluded estimators.
+        multiclass_mode (str): Multiclass handling mode for >2 classes.
         target_column (str): Column name for target column.
         feature_columns (tuple[str, ...]): Column names for feature columns.
         feature_groups (tuple[tuple[int, ...], ...]): Feature groups.
@@ -383,6 +384,7 @@ class LongitudinalBenchmarkNotebookConfig:
     benchmark_name: str
     excluded_estimators: tuple[str, ...]
     hyperparameters_json: dict[str, object]
+    multiclass_mode: str
     target_column: str
     feature_columns: tuple[str, ...]
     feature_groups: tuple[tuple[int, ...], ...]
@@ -463,6 +465,7 @@ class LongitudinalBenchmarkNotebookTemplate:
             f"BENCHMARK_NAME = {repr(config.benchmark_name)}\n"
             f"EXCLUDED_ESTIMATORS = {repr(list(config.excluded_estimators))}\n"
             f"HYPERPARAMETERS_JSON = {repr(config.hyperparameters_json)}\n"
+            f"MULTICLASS_MODE = {repr(config.multiclass_mode)}\n"
             f"TARGET_COLUMN = {repr(config.target_column)}\n"
             f"FEATURE_COLUMNS = {repr(list(config.feature_columns))}\n"
             f"FEATURE_GROUPS = {repr([list(group) for group in config.feature_groups])}\n"
@@ -497,6 +500,8 @@ class LongitudinalBenchmarkNotebookTemplate:
             ")\n"
             "from ldt.machine_learning.support.runtime_validation import (\n"
             "    filter_supported_hyperparameters,\n"
+            "    validate_evaluation_split_feasibility,\n"
+            "    validate_one_vs_rest_evaluation_splits,\n"
             ")\n"
             "from ldt.machine_learning.tools.target_scenarios import TargetScenarioPlanner\n"
             "from ldt.machine_learning.tools.templates import (\n"
@@ -553,9 +558,19 @@ class LongitudinalBenchmarkNotebookTemplate:
             "    raise ValueError('Classification requires at least two classes.')\n\n"
             "feature_groups = tuple(tuple(group) for group in FEATURE_GROUPS)\n"
             "non_longitudinal_features = tuple(NON_LONGITUDINAL_FEATURES)\n\n"
+            "if MULTICLASS_MODE not in {'multiclass', 'one_vs_rest'}:\n"
+            "    raise ValueError(\n"
+            "        'MULTICLASS_MODE must be `multiclass` or `one_vs_rest`.'\n"
+            "    )\n\n"
             "scenario_runs = []\n"
-            "if y_raw.nunique(dropna=True) > 2:\n"
+            "if y_raw.nunique(dropna=True) > 2 and MULTICLASS_MODE == 'one_vs_rest':\n"
             "    scenarios = TargetScenarioPlanner.build_one_vs_rest_scenarios(y=y_raw)\n"
+            "    validate_one_vs_rest_evaluation_splits(\n"
+            "        n_splits=N_SPLITS,\n"
+            "        evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "        holdout_split=HOLDOUT_SPLIT,\n"
+            "        scenarios=scenarios,\n"
+            "    )\n"
             "    for scenario in scenarios:\n"
             "        estimator_specs = _build_estimator_specs(\n"
             "            random_seed=RANDOM_SEED,\n"
@@ -593,6 +608,12 @@ class LongitudinalBenchmarkNotebookTemplate:
             "    LongitudinalTargetEncoder.print_encoding_notice(\n"
             "        target_column=TARGET_COLUMN,\n"
             "        result=target_encoding_result,\n"
+            "    )\n"
+            "    validate_evaluation_split_feasibility(\n"
+            "        y=target_encoding_result.encoded_target,\n"
+            "        n_splits=N_SPLITS,\n"
+            "        evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "        holdout_split=HOLDOUT_SPLIT,\n"
             "    )\n"
             "    estimator_specs = _build_estimator_specs(\n"
             "        random_seed=RANDOM_SEED,\n"
@@ -724,6 +745,7 @@ class MixedBenchmarkNotebookConfig:
         output_root_dir (Path): Filesystem location for output root dir.
         benchmark_name (str): Name for benchmark.
         excluded_estimators (tuple[str, ...]): Excluded estimators.
+        multiclass_mode (str): Multiclass handling mode for >2 classes.
         target_column (str): Column name for target column.
         feature_columns (tuple[str, ...]): Column names for feature columns.
         feature_groups (tuple[tuple[int, ...], ...]): Feature groups.
@@ -746,6 +768,7 @@ class MixedBenchmarkNotebookConfig:
     benchmark_name: str
     excluded_estimators: tuple[str, ...]
     hyperparameters_json: dict[str, object]
+    multiclass_mode: str
     target_column: str
     feature_columns: tuple[str, ...]
     feature_groups: tuple[tuple[int, ...], ...]
@@ -826,6 +849,7 @@ class MixedBenchmarkNotebookTemplate:
             f"BENCHMARK_NAME = {repr(config.benchmark_name)}\n"
             f"EXCLUDED_ESTIMATORS = {repr(list(config.excluded_estimators))}\n"
             f"HYPERPARAMETERS_JSON = {repr(config.hyperparameters_json)}\n"
+            f"MULTICLASS_MODE = {repr(config.multiclass_mode)}\n"
             f"TARGET_COLUMN = {repr(config.target_column)}\n"
             f"FEATURE_COLUMNS = {repr(list(config.feature_columns))}\n"
             f"FEATURE_GROUPS = {repr([list(group) for group in config.feature_groups])}\n"
@@ -860,6 +884,8 @@ class MixedBenchmarkNotebookTemplate:
             ")\n"
             "from ldt.machine_learning.support.runtime_validation import (\n"
             "    filter_supported_hyperparameters,\n"
+            "    validate_evaluation_split_feasibility,\n"
+            "    validate_one_vs_rest_evaluation_splits,\n"
             ")\n"
             "from ldt.machine_learning.tools.standard_machine_learning.discovery import (\n"
             "    discover_standard_estimators,\n"
@@ -936,9 +962,19 @@ class MixedBenchmarkNotebookTemplate:
             "    raise ValueError('Classification requires at least two classes.')\n\n"
             "feature_groups = tuple(tuple(group) for group in FEATURE_GROUPS)\n"
             "non_longitudinal_features = tuple(NON_LONGITUDINAL_FEATURES)\n\n"
+            "if MULTICLASS_MODE not in {'multiclass', 'one_vs_rest'}:\n"
+            "    raise ValueError(\n"
+            "        'MULTICLASS_MODE must be `multiclass` or `one_vs_rest`.'\n"
+            "    )\n\n"
             "scenario_runs = []\n"
-            "if y_raw.nunique(dropna=True) > 2:\n"
+            "if y_raw.nunique(dropna=True) > 2 and MULTICLASS_MODE == 'one_vs_rest':\n"
             "    scenarios = TargetScenarioPlanner.build_one_vs_rest_scenarios(y=y_raw)\n"
+            "    validate_one_vs_rest_evaluation_splits(\n"
+            "        n_splits=N_SPLITS,\n"
+            "        evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "        holdout_split=HOLDOUT_SPLIT,\n"
+            "        scenarios=scenarios,\n"
+            "    )\n"
             "    for scenario in scenarios:\n"
             "        estimator_specs = _build_estimator_specs(\n"
             "            random_seed=RANDOM_SEED,\n"
@@ -976,6 +1012,12 @@ class MixedBenchmarkNotebookTemplate:
             "    LongitudinalTargetEncoder.print_encoding_notice(\n"
             "        target_column=TARGET_COLUMN,\n"
             "        result=target_encoding_result,\n"
+            "    )\n"
+            "    validate_evaluation_split_feasibility(\n"
+            "        y=target_encoding_result.encoded_target,\n"
+            "        n_splits=N_SPLITS,\n"
+            "        evaluation_strategy=EVALUATION_STRATEGY,\n"
+            "        holdout_split=HOLDOUT_SPLIT,\n"
             "    )\n"
             "    estimator_specs = _build_estimator_specs(\n"
             "        random_seed=RANDOM_SEED,\n"

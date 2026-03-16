@@ -192,6 +192,7 @@ class LongitudinalMachineLearning(MachineLearningTool):
             metric_keys="accuracy,f1_macro",
             evaluation_strategy="cross_validation",
             n_splits=5,
+            multiclass_mode="multiclass",
             random_seed=42,
         )
         ```
@@ -234,8 +235,9 @@ class LongitudinalMachineLearning(MachineLearningTool):
                   `feature_groups_preset`, `feature_groups_suffix`,
                   `non_longitudinal_features`, `non_longitudinal_mode`,
                   `estimator_key`, `metric_keys`, `evaluation_strategy`,
-                  `n_splits`, `holdout_split`, `random_seed`, `output_dir`,
-                  `hyperparameters_json`, and `silent_training_output`.
+                  `n_splits`, `holdout_split`, `multiclass_mode`,
+                  `random_seed`, `output_dir`, `hyperparameters_json`, and
+                  `silent_training_output`.
                 - for `list_estimators` and `list_metrics`, no extra keys are
                   required.
                 - any additional keys are merged into `params` as direct
@@ -281,8 +283,9 @@ class LongitudinalMachineLearning(MachineLearningTool):
                 `feature_groups_preset`, `feature_groups_suffix`,
                 `non_longitudinal_features`, `non_longitudinal_mode`,
                 `estimator_key`, `metric_keys`, `evaluation_strategy`,
-                `n_splits`, `holdout_split`, `random_seed`, `output_dir`,
-                `hyperparameters_json`, and `silent_training_output`.
+                `n_splits`, `holdout_split`, `multiclass_mode`,
+                `random_seed`, `output_dir`, `hyperparameters_json`, and
+                `silent_training_output`.
 
         Returns:
             dict[str, Any]: Technique-specific workflow result payload.
@@ -346,8 +349,8 @@ def run_longitudinal_machine_learning_tool(
             `feature_groups_mode`, `feature_groups_preset`,
             `feature_groups_suffix`, `non_longitudinal_features`,
             `non_longitudinal_mode`, `estimator_key`, `metric_keys`,
-            `evaluation_strategy`, `n_splits`, `holdout_split`, `random_seed`;
-            optional keys:
+            `evaluation_strategy`, `n_splits`, `holdout_split`,
+            `multiclass_mode`, `random_seed`; optional keys:
             `output_dir`, `hyperparameters_json`, and
             `silent_training_output`.
 
@@ -475,6 +478,11 @@ def _run_longitudinal_machine_learning_tool(
         n_splits=as_required_int(resolved, "n_splits", minimum=2),
         holdout_split_raw=as_optional_string(resolved, "holdout_split"),
     )
+    multiclass_mode = as_required_string(resolved, "multiclass_mode").strip().lower()
+    if multiclass_mode not in {"multiclass", "one_vs_rest"}:
+        raise InputValidationError(
+            "multiclass_mode must be `multiclass` or `one_vs_rest`."
+        )
     random_seed = as_required_int(resolved, "random_seed")
     silent_training_output = as_bool(
         resolved.get("silent_training_output", True),
@@ -497,7 +505,7 @@ def _run_longitudinal_machine_learning_tool(
 
     experiment = ClassificationExperimentTemplate()
 
-    if unique_class_count > 2:
+    if unique_class_count > 2 and multiclass_mode == "one_vs_rest":
         scenarios = TargetScenarioPlanner.build_one_vs_rest_scenarios(y=y_raw)
         validate_one_vs_rest_evaluation_splits(
             n_splits=evaluation.n_splits,
@@ -544,6 +552,7 @@ def _run_longitudinal_machine_learning_tool(
 
         return {
             "mode": "one_vs_rest",
+            "multiclass_mode": multiclass_mode,
             "estimator_key": estimator_key,
             "estimator_name": estimator_name,
             "evaluation_strategy": evaluation.evaluation_strategy,
@@ -588,6 +597,7 @@ def _run_longitudinal_machine_learning_tool(
 
     return {
         "mode": "multiclass_or_binary",
+        "multiclass_mode": multiclass_mode,
         "estimator_key": estimator_key,
         "estimator_name": estimator_name,
         "metric_key": result.metric_key,

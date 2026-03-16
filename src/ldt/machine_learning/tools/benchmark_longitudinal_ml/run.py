@@ -89,6 +89,7 @@ class BenchmarkLongitudinalML(MachineLearningTool):
             metric_keys="accuracy,f1_macro",
             evaluation_strategy="cross_validation",
             n_splits=5,
+            multiclass_mode="multiclass",
             random_seed=42,
         )
         ```
@@ -131,8 +132,8 @@ class BenchmarkLongitudinalML(MachineLearningTool):
                   `feature_groups_preset`, `feature_groups_suffix`,
                   `non_longitudinal_features`, `non_longitudinal_mode`,
                   `excluded_estimators`, `metric_keys`, `evaluation_strategy`,
-                  `n_splits`, `holdout_split`, `random_seed`, `output_root_dir`,
-                  `max_parallel_candidates`,
+                  `n_splits`, `holdout_split`, `multiclass_mode`,
+                  `random_seed`, `output_root_dir`, `max_parallel_candidates`,
                   `hyperparameters_json`,
                   `silent_training_output`, `generate_notebook`,
                   `notebook_output_path`,
@@ -183,8 +184,8 @@ class BenchmarkLongitudinalML(MachineLearningTool):
                 `feature_groups_preset`, `feature_groups_suffix`,
                 `non_longitudinal_features`, `non_longitudinal_mode`,
                 `excluded_estimators`, `metric_keys`, `evaluation_strategy`,
-                `n_splits`, `holdout_split`, `random_seed`, `output_root_dir`,
-                `max_parallel_candidates`,
+                `n_splits`, `holdout_split`, `multiclass_mode`,
+                `random_seed`, `output_root_dir`, `max_parallel_candidates`,
                 `hyperparameters_json`,
                 `silent_training_output`, `generate_notebook`,
                 `notebook_output_path`,
@@ -252,10 +253,10 @@ def run_benchmark_longitudinal_ml_tool(
             `feature_groups_mode`, `feature_groups_preset`,
             `feature_groups_suffix`, `non_longitudinal_features`,
             `non_longitudinal_mode`, `excluded_estimators`, `metric_keys`,
-            `evaluation_strategy`, `n_splits`, `holdout_split`, `random_seed`;
-            optional keys:
-            `output_root_dir`, `max_parallel_candidates`, `hyperparameters_json`,
-            `silent_training_output`, `generate_notebook`,
+            `evaluation_strategy`, `n_splits`, `holdout_split`,
+            `multiclass_mode`, `random_seed`; optional keys:
+            `output_root_dir`, `max_parallel_candidates`,
+            `hyperparameters_json`, `silent_training_output`, `generate_notebook`,
             `notebook_output_path`, `include_pipeline_profiler_at_end`, and
             `generate_pipeline_profiler_html`.
 
@@ -374,6 +375,11 @@ def _run_benchmark_longitudinal_ml_tool(
         n_splits=as_required_int(resolved, "n_splits", minimum=2),
         holdout_split_raw=as_optional_string(resolved, "holdout_split"),
     )
+    multiclass_mode = as_required_string(resolved, "multiclass_mode").strip().lower()
+    if multiclass_mode not in {"multiclass", "one_vs_rest"}:
+        raise InputValidationError(
+            "multiclass_mode must be `multiclass` or `one_vs_rest`."
+        )
     random_seed = as_required_int(resolved, "random_seed")
     max_parallel_candidates = as_required_int(
         resolved,
@@ -423,7 +429,8 @@ def _run_benchmark_longitudinal_ml_tool(
         )
 
     scenarios = None
-    if unique_class_count > 2:
+    target_encoding = LongitudinalTargetEncoder.encode_if_needed(y=y_raw)
+    if unique_class_count > 2 and multiclass_mode == "one_vs_rest":
         scenarios = TargetScenarioPlanner.build_one_vs_rest_scenarios(y=y_raw)
         validate_one_vs_rest_evaluation_splits(
             n_splits=evaluation.n_splits,
@@ -432,8 +439,7 @@ def _run_benchmark_longitudinal_ml_tool(
             scenarios=scenarios,
         )
     else:
-        encoded = LongitudinalTargetEncoder.encode_if_needed(y=y_raw)
-        y_raw = encoded.encoded_target
+        y_raw = target_encoding.encoded_target
         validate_evaluation_split_feasibility(
             y=y_raw,
             n_splits=evaluation.n_splits,
@@ -549,6 +555,7 @@ def _run_benchmark_longitudinal_ml_tool(
             benchmark_name=_BENCHMARK_NAME,
             excluded_estimators=tuple(sorted(excluded)),
             hyperparameters_json=hyperparameter_overrides,
+            multiclass_mode=multiclass_mode,
             target_column=target_column,
             feature_columns=tuple(feature_columns),
             feature_groups=feature_vectors.feature_groups,
@@ -567,7 +574,13 @@ def _run_benchmark_longitudinal_ml_tool(
         )
 
     return {
+        "mode": (
+            "one_vs_rest"
+            if scenarios is not None
+            else "multiclass_or_binary"
+        ),
         "benchmark_name": _BENCHMARK_NAME,
+        "multiclass_mode": multiclass_mode,
         "evaluation_strategy": evaluation.evaluation_strategy,
         "n_splits": evaluation.n_splits,
         "holdout_split": evaluation.holdout_split,
@@ -578,5 +591,14 @@ def _run_benchmark_longitudinal_ml_tool(
         "scenario_count": len(benchmark_runs),
         "output_root_dir": str(output_root_dir.resolve()),
         "notebook_path": (str(saved_notebook.resolve()) if saved_notebook else None),
+        "target_was_encoded": target_encoding.was_encoded if scenarios is None else False,
+        "target_label_mapping": (
+            [
+                {"encoded": encoded, "original": label}
+                for encoded, label in target_encoding.label_mapping
+            ]
+            if scenarios is None
+            else []
+        ),
         "dropped_rows": int(len(dataset) - len(modelling_data)),
     }
