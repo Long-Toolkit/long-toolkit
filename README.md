@@ -109,7 +109,15 @@ The documentation walks through every toolkit, with code that runs as is:
 
 ## <img src="public/icons/lucide/graduation-cap.svg" width="32" alt="" /> Citation
 
-Simon Provost's current affiliation is **Postdoctoral Research @ McGill University (MEDomicsLab)**. For general enquiries, contact [simon.g.provost@mcgill.ca](mailto:simon.g.provost@mcgill.ca).
+This initiative is developed through research at the University of Edinburgh, under the supervision of [Dr Alex Kwong](https://edwebprofiles.ed.ac.uk/profile/dr-alex-kwong).
+
+Team:
+
+- [Simon Provost](https://simonprovost.xyz/): Postdoctoral Research @ McGill University (MEDomicsLab).
+- [Bianca Branco](https://github.com/b-branco): PhD student, University of Edinburgh.
+- [Honghui Chen](https://github.com/ChorasChan): PhD student, University of Edinburgh.
+- [Isaac Tassella](https://github.com/tassellaisaac): PhD student, University of Edinburgh.
+- [Dr Alex Kwong](https://edwebprofiles.ed.ac.uk/profile/dr-alex-kwong): University of Edinburgh; Supervisor.
 
 ```bibtex
 @software{Provost_Long_Toolkit,
