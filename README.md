@@ -5,7 +5,7 @@
 <p align="center"><big><big><strong>Long</strong>-<em>Toolkit</em></big></big><br/><em>A hub of Python toolkits for longitudinal data, from preparation to explainability</em></p>
 
 <div align="center">
-  <img src="https://img.shields.io/static/v1?label=Python&message=3.10%20to%203.12&color=DEA2C2&style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10 to 3.12">
+  <img src="https://img.shields.io/static/v1?label=Python&message=3.10&color=DEA2C2&style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10 only">
   <img src="https://img.shields.io/static/v1?label=UV&message=managed&color=DEA2C2&style=for-the-badge&logo=uv&logoColor=white" alt="UV managed">
   <img src="https://img.shields.io/static/v1?label=Ruff&message=compliant&color=DEA2C2&style=for-the-badge&logo=ruff&logoColor=white" alt="Ruff compliant">
   <img src="https://img.shields.io/static/v1?label=Beartype&message=verified&color=DEA2C2&style=for-the-badge" alt="Beartype verified">
@@ -47,7 +47,7 @@ The hub ships as two components that run the same tools: the `long-toolkit` *Pyt
 <summary><strong>Machine Requirements</strong> (<a href="https://www.python.org/downloads/">Python</a>, <a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a>)</summary>
 
 Install the following first:
-- Python `3.10` to `3.12`, or [`uv`](https://docs.astral.sh/uv/), the state-of-the-art Python package manager, to manage it
+- Python `3.10` only, or [`uv`](https://docs.astral.sh/uv/), the state-of-the-art Python package manager, to manage it
 - On macOS, `libomp` (the OpenMP runtime loaded by XGBoost and LightGBM)
 - Go, only to build the CLI from source
 
@@ -64,7 +64,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ### <img src="public/icons/lucide/tally-1.svg" width="28" alt="" /> Install `long-toolkit` ([PyPI Index](https://pypi.org/project/long-toolkit/))
 
-Use Python `3.10` for now: it is the validated installation, while a longitudinal dependency currently fails to build from source on Python `3.11`.
+Long-Toolkit supports Python `3.10` only.
 
 Before installing, add the following to your project's `pyproject.toml`. Scikit-Longitudinal supplies `sklearn` through its lexicographical fork, so the stock package must be excluded, as described in its [installation guide](https://scikit-longitudinal.readthedocs.io/latest/getting-started/).
 

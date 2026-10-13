@@ -47,7 +47,7 @@ Each toolkit belongs to one of the four stages of a longitudinal analysis, in th
 
 ### Machine Requirements
 
-The Python package requires Python `3.10` to `3.12` (installed directly, or managed by `uv`). Go is only needed to build the CLI from source.
+The Python package supports Python `3.10` only (installed directly, or managed by `uv`). Go is only needed to build the CLI from source.
 
 === "macOS"
 
@@ -71,7 +71,7 @@ The Python package requires Python `3.10` to `3.12` (installed directly, or mana
 
 ### Python Package
 
-Use Python `3.10` for the validated installation. A longitudinal dependency currently fails to build from source on Python `3.11`; Python `3.12` has not yet been validated.
+Use Python `3.10`; other Python versions are not supported.
 
 === "uv (recommended)"
 
