@@ -45,7 +45,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.10"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -60,7 +60,7 @@ jobs:
       - name: Bump version
         id: bump
         run: |
-          PREVIOUS_VERSION="$(python -c "import tomllib; from pathlib import Path; print(tomllib.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version'])")"
+          PREVIOUS_VERSION="$(uv run --no-project --python 3.10 --with tomli==2.4.0 python -c "import tomli; from pathlib import Path; print(tomli.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version'])")"
           LATEST_TAG_VERSION="$(git tag -l 'v*' --sort=-v:refname | head -n1 | sed 's/^v//')"
           BASE_VERSION="$(python -c "import sys; p=lambda v: tuple(int(x) for x in v.split('.')); py_v=sys.argv[1]; tag_v=sys.argv[2].strip(); print(py_v if (not tag_v or p(py_v) >= p(tag_v)) else tag_v)" "${PREVIOUS_VERSION}" "${LATEST_TAG_VERSION}")"
           IFS='.' read -r MAJOR MINOR PATCH <<< "${BASE_VERSION}"
@@ -74,7 +74,7 @@ jobs:
           echo "Latest release tag version: ${LATEST_TAG_VERSION:-<none>}"
           echo "Base version for bump: ${BASE_VERSION}"
           echo "Target version: ${TARGET_VERSION}"
-          uvx --python 3.11 --from bump-my-version==1.2.7 bump-my-version bump \
+          uvx --python 3.10 --from bump-my-version==1.2.7 bump-my-version bump \
             --config-file .bumpversion.toml \
             --no-commit --no-tag \
             --current-version "${PREVIOUS_VERSION}" \
@@ -83,7 +83,7 @@ jobs:
           git add pyproject.toml CITATION.cff .bumpversion.toml uv.lock
           git commit -m "chore(release): bump version to ${TARGET_VERSION}"
           git tag -a "v${TARGET_VERSION}" -m "chore(release): release version ${TARGET_VERSION}"
-          CURRENT_VERSION="$(python -c "import tomllib; from pathlib import Path; print(tomllib.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version'])")"
+          CURRENT_VERSION="$(uv run --no-project --python 3.10 --with tomli==2.4.0 python -c "import tomli; from pathlib import Path; print(tomli.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version'])")"
           echo "bumped=true" >> "$GITHUB_OUTPUT"
           echo "previous-version=${PREVIOUS_VERSION}" >> "$GITHUB_OUTPUT"
           echo "current-version=${CURRENT_VERSION}" >> "$GITHUB_OUTPUT"
