@@ -29,6 +29,7 @@ dependencies = [
   "rich>=13.7.1",
   "rich-pyfiglet>=1.0.0",
   "numpy>=1.26.4",
+  "scipy>=1.11,<1.15; sys_platform == 'darwin' and python_version < '3.11'",
   "pandas>=2.2.2",
   "PyYAML>=6.0.2",
   "scikit-learn>=1.4.2,<1.6",
@@ -56,6 +57,7 @@ override-dependencies = [
 
 [dependency-groups]
 dev = [
+  "pytest>=8.3",
   "black>=24.4.2",
   "flake8>=7.1.0",
   "pre-commit>=3.7.1",
