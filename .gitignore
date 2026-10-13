@@ -74,6 +74,9 @@ ENV/
 *.log
 
 # Local runtime/output artifacts
+artifacts/
+experiments/**/reports*/
+experiments/**/splits/
 outputs/
 tmp/
 site/
