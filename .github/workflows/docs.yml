@@ -48,10 +48,15 @@ jobs:
           version: "latest"
 
       - name: Create virtual environment
-        run: uv venv
+        run: uv venv --python 3.10
 
       - name: Install dependencies
-        run: uv sync --locked --python 3.10
+        run: uv pip install --require-hashes -r requirements-dev.txt
+
+      - name: Verify the requirements export
+        run: |
+          uv export --locked --only-group docs --no-header --output-file /tmp/requirements-dev.txt
+          diff -u requirements-dev.txt /tmp/requirements-dev.txt
 
       - name: Build documentation
-        run: uv run zensical build
+        run: uv run --no-sync zensical build --strict

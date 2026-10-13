@@ -7,7 +7,7 @@ build:
   jobs:
     build:
       html:
-        - python -m zensical.main build
+        - python -m zensical.main build --strict
     post_build:
       - mkdir -p $READTHEDOCS_OUTPUT/html/
       - cp --recursive site/* $READTHEDOCS_OUTPUT/html/
@@ -15,6 +15,5 @@ build:
 python:
   install:
     - method: uv
-      command: sync
-      groups:
-        - dev
+      command: pip
+      requirements: requirements-dev.txt

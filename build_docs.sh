@@ -9,9 +9,8 @@ fi
 
 cd "$(dirname "$0")"
 
-uv venv
-uv sync
-uv run zensical build
+uv sync --locked --python 3.10
+uv run --locked --python 3.10 zensical build --strict
 
 echo "Documentation built successfully in the 'site' directory."
 echo "To preview, run: uv run zensical serve"
