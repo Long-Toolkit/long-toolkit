@@ -1,0 +1,16 @@
+:root,
+[data-md-color-scheme="slate"] {
+  --copy-to-llm-button-bg: #1b1b1b;
+  --copy-to-llm-button-text: #f5f5f5;
+  --copy-to-llm-button-hover: #dea2c2;
+  --copy-to-llm-toast-bg: #252121;
+  --copy-to-llm-toast-text: #f5f5f5;
+}
+
+[data-md-color-scheme="default"] {
+  --copy-to-llm-button-bg: #fffaf4;
+  --copy-to-llm-button-text: #252121;
+  --copy-to-llm-button-hover: #dea2c2;
+  --copy-to-llm-toast-bg: #252121;
+  --copy-to-llm-toast-text: #fff6eb;
+}

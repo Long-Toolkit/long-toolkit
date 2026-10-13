@@ -18,7 +18,11 @@
   function isEditableTarget(target) {
     if (!(target instanceof HTMLElement)) return false;
     if (target.isContentEditable) return true;
-    return Boolean(target.closest("input, textarea, select, [contenteditable=''], [contenteditable='true']"));
+    return Boolean(
+      target.closest(
+        "input, textarea, select, [contenteditable=''], [contenteditable='true']"
+      )
+    );
   }
 
   function getSearchToggle() {
@@ -63,6 +67,7 @@
     if (hintFadeTimer !== null) {
       window.clearTimeout(hintFadeTimer);
     }
+
     hintFadeTimer = window.setTimeout(() => {
       hintCycleIndex = (hintCycleIndex + 1) % SHORTCUT_HINTS.length;
       renderHintSymbols();
@@ -145,10 +150,15 @@
 
   document.addEventListener("keydown", focusSearchFromShortcut);
 
-  if (typeof window.document$ !== "undefined" && typeof window.document$.subscribe === "function") {
+  if (
+    typeof window.document$ !== "undefined" &&
+    typeof window.document$.subscribe === "function"
+  ) {
     window.document$.subscribe(() => initSearchShortcut(document));
   } else if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => initSearchShortcut(document));
+    document.addEventListener("DOMContentLoaded", () =>
+      initSearchShortcut(document)
+    );
   } else {
     initSearchShortcut(document);
   }

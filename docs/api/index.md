@@ -1,8 +1,12 @@
+---
+icon: lucide/book-open
+---
+
 # API Reference
 
-<div class="mcs-hero mcs-hero--lead" markdown>
+<div class="page-lead page-lead--lead" markdown>
 
-Welcome to the API reference. Explore data preparation, preprocessing, and ML-related task-based tools to quickly identify available classes and the parameters each tool expects.
+The application programming interface (API) reference lists every public class of `Long-Toolkit`, grouped by toolkit, with the parameters each tool expects and the artefacts it produces. Each page is generated from the class docstrings, so that it stays in line with the installed version.
 
 </div>
 
@@ -20,7 +24,7 @@ Welcome to the API reference. Explore data preparation, preprocessing, and ML-re
 
     ---
 
-    Tools for cleaning, harmonisation, imputation, trajectory building, and ML-ready shaping.
+    Tools for cleaning, imputation, harmonisation and long/wide reshaping.
 
     [:octicons-book-24: Docs](./data-preprocessing.md){ .md-button .md-button--primary }
 
@@ -28,7 +32,7 @@ Welcome to the API reference. Explore data preparation, preprocessing, and ML-re
 
     ---
 
-    Cross-sectional ML workflows and estimator-driven experiment runs.
+    One standard (non-longitudinal) estimator, evaluated and saved.
 
     [:octicons-book-24: Docs](./standard-machine-learning.md){ .md-button .md-button--primary }
 
@@ -36,7 +40,7 @@ Welcome to the API reference. Explore data preparation, preprocessing, and ML-re
 
     ---
 
-    Dedicated longitudinal estimators and prediction workflows for repeated-measure data.
+    One longitudinal-data-aware estimator, evaluated and saved.
 
     [:octicons-book-24: Docs](./longitudinal-machine-learning.md){ .md-button .md-button--primary }
 
@@ -44,7 +48,7 @@ Welcome to the API reference. Explore data preparation, preprocessing, and ML-re
 
     ---
 
-    Standard, longitudinal, and mixed benchmark toolsets.
+    The main toolkit: standard, longitudinal and mixed benchmarks.
 
     [:octicons-book-24: Docs](./benchmarks.md){ .md-button .md-button--primary }
 
@@ -52,7 +56,7 @@ Welcome to the API reference. Explore data preparation, preprocessing, and ML-re
 
     ---
 
-    Model interpretation utilities including SHAP analysis tooling.
+    SHAP analysis of saved models.
 
     [:octicons-book-24: Docs](./explainability.md){ .md-button .md-button--primary }
 

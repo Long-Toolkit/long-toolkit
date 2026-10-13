@@ -1,0 +1,197 @@
+[project]
+site_name = "Long-Toolkit"
+site_url = "https://long-toolkit.readthedocs.io/"
+site_author = "Simon Provost"
+site_description = """
+Long-Toolkit is a hub of Python toolkits for longitudinal data, from data
+preparation and preprocessing to benchmarking and modelling, with a no-code
+terminal interface.
+"""
+copyright = """
+Maintained by Simon Provost &copy; Long-Toolkit contributors, 2026-present
+"""
+repo_url = "https://github.com/Long-Toolkit/long-toolkit"
+repo_name = "Long-Toolkit/long-toolkit"
+edit_uri = "edit/main/docs/"
+nav = [
+    { "Home" = "index.md" },
+    { "Get Started" = "getting-started/index.md" },
+    { "Toolkits" = [
+        { "Overview" = "toolkits/index.md" },
+        { "Data Preparation" = "toolkits/data-preparation.md" },
+        { "Data Preprocessing" = "toolkits/data-preprocessing.md" },
+        { "Benchmarking and Modelling" = "toolkits/benchmarking-and-modelling.md" },
+        { "Explainability" = "toolkits/explainability.md" },
+    ]},
+    { "Tutorials" = [
+        { "Overview" = "tutorials/index.md" },
+        { "First Benchmark" = "tutorials/first-benchmark.md" },
+        { "CLI Tutorial" = "tutorials/cli.md" },
+        { "API Tutorial" = "tutorials/api.md" },
+    ]},
+    { "API" = [
+        { "Overview" = "api/index.md" },
+        { "Data Preparation" = "api/data-preparation.md" },
+        { "Data Preprocessing" = "api/data-preprocessing.md" },
+        { "Standard Machine Learning" = "api/standard-machine-learning.md" },
+        { "Longitudinal Machine Learning" = "api/longitudinal-machine-learning.md" },
+        { "Benchmarks" = "api/benchmarks.md" },
+        { "Explainability" = "api/explainability.md" },
+    ]},
+    { "Community Hub" = [
+        { "Community Hub" = "community-hub.md" },
+        { "Contributing" = "contributing.md" },
+        { "Branding" = "branding.md" },
+        { "Releases" = "https://github.com/Long-Toolkit/long-toolkit/releases" },
+        { "PyPI Index" = "https://pypi.org/project/long-toolkit/" },
+    ]},
+]
+extra_css = [
+    "stylesheets/extra.css",
+    "stylesheets/landing.css",
+    "stylesheets/theme-refresh.css",
+    "assets/copy-to-llm/copy-to-llm.css",
+    "assets/copy-to-llm/copy-to-llm-custom.css",
+]
+extra_javascript = [
+    "javascripts/mathjax.js",
+    "https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js",
+    "javascripts/image-zoom.js",
+    "javascripts/diagram-zoom.js",
+    "assets/copy-to-llm/copy-to-llm.js",
+    "javascripts/copy-to-llm-scope.js",
+    "javascripts/search-shortcut.js",
+    "javascripts/ascii-header.js",
+    "javascripts/homepage.js",
+]
+
+[project.theme]
+variant = "modern"
+custom_dir = "docs/overrides"
+favicon = "public/resources/long_toolkit_logo.png"
+logo = "public/resources/long_toolkit_logo.png"
+language = "en"
+features = [
+    "announce.dismiss",
+    "content.action.edit",
+    "content.action.view",
+    "content.code.annotate",
+    "content.code.copy",
+    "content.code.select",
+    "content.footnote.tooltips",
+    "content.tabs.link",
+    "content.tooltips",
+    "navigation.footer",
+    "navigation.instant",
+    "navigation.instant.prefetch",
+    "navigation.instant.progress",
+    "navigation.path",
+    "navigation.sections",
+    "navigation.tabs",
+    "navigation.top",
+    "navigation.tracking",
+    "search.highlight",
+    "toc.follow",
+]
+
+[project.theme.icon]
+repo = "simple/github"
+edit = "lucide/pencil"
+view = "lucide/eye"
+
+[project.theme.font]
+text = "Space Grotesk"
+code = "IBM Plex Mono"
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to light mode"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github-alt"
+link = "https://github.com/Long-Toolkit"
+name = "Long-Toolkit on GitHub"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/python"
+link = "https://pypi.org/project/long-toolkit/"
+name = "long-toolkit on PyPI"
+
+[[project.extra.social]]
+icon = "fontawesome/solid/building-columns"
+link = "https://life-epi-psych.github.io"
+name = "LEAP group"
+
+[project.plugins.mkdocstrings.handlers.python]
+paths = ["src"]
+
+[project.plugins.mkdocstrings.handlers.python.options]
+docstring_style = "google"
+heading_level = 3
+show_source = false
+show_root_heading = true
+show_category_heading = false
+show_root_full_path = false
+
+[project.markdown_extensions.abbr]
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.attr_list]
+[project.markdown_extensions.def_list]
+[project.markdown_extensions.footnotes]
+[project.markdown_extensions.md_in_html]
+[project.markdown_extensions.meta]
+[project.markdown_extensions.tables]
+
+[project.markdown_extensions.toc]
+permalink = true
+
+[project.markdown_extensions.pymdownx.arithmatex]
+generic = true
+
+[project.markdown_extensions.pymdownx.betterem]
+smart_enable = "all"
+
+[project.markdown_extensions.pymdownx.blocks.caption]
+[project.markdown_extensions.pymdownx.caret]
+[project.markdown_extensions.pymdownx.details]
+
+[project.markdown_extensions.pymdownx.emoji]
+emoji_generator = "zensical.extensions.emoji.to_svg"
+emoji_index = "zensical.extensions.emoji.twemoji"
+
+[project.markdown_extensions.pymdownx.highlight]
+anchor_linenums = true
+line_spans = "__span"
+pygments_lang_class = true
+
+[project.markdown_extensions.pymdownx.inlinehilite]
+[project.markdown_extensions.pymdownx.keys]
+[project.markdown_extensions.pymdownx.magiclink]
+[project.markdown_extensions.pymdownx.mark]
+[project.markdown_extensions.pymdownx.smartsymbols]
+
+[project.markdown_extensions.pymdownx.snippets]
+base_path = ["docs"]
+
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [
+    { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+
+[project.markdown_extensions.pymdownx.tabbed]
+alternate_style = true
+
+[project.markdown_extensions.pymdownx.tasklist]
+custom_checkbox = true
+
+[project.markdown_extensions.pymdownx.tilde]

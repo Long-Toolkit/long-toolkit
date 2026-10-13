@@ -6,8 +6,7 @@ on:
       - main
     paths:
       - 'docs/**'
-      - 'mkdocs.yml'
-      - 'mkdocs.fast.yml'
+      - 'zensical.toml'
       - 'requirements-dev.txt'
       - '.readthedocs.yaml'
       - 'pyproject.toml'
@@ -18,8 +17,7 @@ on:
       - main
     paths:
       - 'docs/**'
-      - 'mkdocs.yml'
-      - 'mkdocs.fast.yml'
+      - 'zensical.toml'
       - 'requirements-dev.txt'
       - '.readthedocs.yaml'
       - 'pyproject.toml'
@@ -56,4 +54,4 @@ jobs:
         run: uv sync
 
       - name: Build documentation
-        run: uv run mkdocs build --strict --site-dir site
+        run: uv run zensical build

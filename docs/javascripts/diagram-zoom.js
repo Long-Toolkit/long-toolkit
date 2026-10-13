@@ -108,7 +108,7 @@
   function initMermaidZoom(root = document) {
     ensureOverlay();
     const diagrams = root.querySelectorAll(
-      ".md-typeset .mermaid svg, .md-typeset .mcs-stage-diagram svg"
+      ".md-typeset .mermaid svg"
     );
     diagrams.forEach(bindDiagram);
   }
@@ -147,9 +147,5 @@
   observer.observe(document.documentElement, {
     childList: true,
     subtree: true,
-  });
-
-  window.addEventListener("mcs:diagram-rendered", () => {
-    scheduleScan();
   });
 })();

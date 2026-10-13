@@ -1,8 +1,12 @@
+---
+icon: lucide/scan-search
+---
+
 # Explainability Tools
 
-This page contains explainability tools for interpreting model behaviour after training. Use the class docstring below to check required model inputs, configurable explanation options, and how interpretation outputs are structured for downstream analysis.
+This page of the application programming interface (API) reference documents the tool of the [Explainability Toolkit](../toolkits/explainability.md), which computes SHAP values for a saved model (e.g., the best estimator of a benchmark). The class docstring lists the required inputs, the explanation options and the artefacts written.
 
 !!! note
-    `run_analysis` is the underlying explainability mode. In Python API usage, `SHAPAnalysis.fit_predict(...)` (or `fit(...)` + `predict(...)`) defaults to this mode.
+    `run_analysis` is the underlying explainability mode. In Python, `SHAPAnalysis.fit_explain(...)` (or `fit(...)` then `explain(...)`) defaults to this mode.
 
-## ::: ldt.machine_learning.tools.explainability.shap_analysis.run.SHAPAnalysis
+## ::: long_toolkit.explainability.tools.shap_analysis.run.SHAPAnalysis

@@ -1,32 +1,35 @@
-# Tutorials Overview
+---
+icon: lucide/graduation-cap
+---
 
-<div class="mcs-hero" markdown>
+# Tutorials
 
-This section shows two ways to use `LDT-Toolkit`:
-
-- **CLI tutorials**: recommended no-code path through the full interactive experience.
-- **API tutorials**: advanced path for Jupyter notebooks and Python scripts.
-
-If you are new to the toolkit, start with the CLI flow first, then move to API usage when you need lower-level control.
-
-</div>
+The tutorials are hands-on: each one runs from start to finish, either in the command-line interface (CLI) or in Python. The [Toolkits](../toolkits/index.md) pages explain the options in depth, and the [application programming interface (API) reference](../api/index.md) lists every parameter.
 
 <div class="grid cards" markdown>
 
--   :material-console:{ .lg .middle } __CLI tutorials__
+-   :material-trophy-outline:{ .lg .middle } __First Benchmark__
 
     ---
 
-    Recommended no-code onboarding to run the toolkit end-to-end from the interactive terminal interface.
+    Generate a synthetic cohort and rank standard against longitudinal machine learning on it, in Python.
 
-    [:octicons-arrow-right-24: Open CLI tutorials](./cli.md){ .md-button .md-button--primary }
+    [:octicons-arrow-right-24: Open the tutorial](./first-benchmark.md){ .md-button .md-button--primary }
 
--   :material-language-python:{ .lg .middle } __API tutorials__
+-   :material-console:{ .lg .middle } __CLI Tutorial__
 
     ---
 
-    Advanced usage in Python scripts and Jupyter notebooks, including the three starter examples.
+    Launch the interface, navigate the stages, and run any tool from the command palette.
 
-    [:octicons-arrow-right-24: Open API tutorials](./api.md){ .md-button .md-button--primary }
+    [:octicons-arrow-right-24: Open the tutorial](./cli.md){ .md-button .md-button--primary }
+
+-   :material-language-python:{ .lg .middle } __API Tutorial__
+
+    ---
+
+    Chain one tool of each toolkit in Python, from a synthetic cohort to a standard and a longitudinal model.
+
+    [:octicons-arrow-right-24: Open the tutorial](./api.md){ .md-button .md-button--primary }
 
 </div>

@@ -4,10 +4,12 @@ build:
   os: ubuntu-24.04
   tools:
     python: "3.11"
-
-python:
-  install:
-    - requirements: requirements-dev.txt
-
-mkdocs:
-  configuration: mkdocs.yml
+  jobs:
+    install:
+      - python -m pip install -r requirements-dev.txt
+    build:
+      html:
+        - python -m zensical.main build
+    post_build:
+      - mkdir -p $READTHEDOCS_OUTPUT/html/
+      - cp --recursive site/* $READTHEDOCS_OUTPUT/html/

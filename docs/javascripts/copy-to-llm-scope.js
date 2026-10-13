@@ -1,10 +1,10 @@
 (() => {
   const EXCLUDED_ROUTE_SUFFIXES = new Set([
     "/community-hub",
-    "/getting-started/overview",
+    "/getting-started",
     "/tutorials",
     "/api",
-    "/study-reproducibility",
+    "/toolkits",
   ]);
   const MARKDOWN_ACTIONS = new Set([
     "copy-markdown-link",
@@ -69,8 +69,8 @@
     }
 
     // Common deployment prefixes for this repo.
-    prefixes.push("/Longitudinal-Depression-Toolkit/ldt-toolkit");
-    prefixes.push("/ldt-toolkit");
+    prefixes.push("/Long-Toolkit/long-toolkit");
+    prefixes.push("/long-toolkit");
 
     for (const candidate of prefixes) {
       const base = candidate.startsWith("/") ? candidate : `/${candidate}`;
@@ -88,7 +88,7 @@
   function getRawRepoBase() {
     const configured = getMetaContent("mkdocs-copy-to-llm-repo-url");
     if (configured) return configured.replace(/\/+$/, "");
-    return "https://raw.githubusercontent.com/Longitudinal-Depression-Toolkit/ldt-toolkit/refs/heads/main/docs";
+    return "https://raw.githubusercontent.com/Long-Toolkit/long-toolkit/refs/heads/main/docs";
   }
 
   function buildMarkdownCandidates(path) {

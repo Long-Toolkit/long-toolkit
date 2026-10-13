@@ -1,9 +1,10 @@
 (() => {
   const HOME_SELECTOR = "[data-homepage-root]";
   const BODY_CLASS = "homepage-page";
-  const EXPAND_DELAY_MS = 5000;
   const WAVE_RANGE = 760;
-  const MAX_WAVE_SCALE = 1.45;
+  const MAX_WAVE_SCALE = 1.35;
+  const FOOTER_WORD_REVEAL_THRESHOLD = 0.44;
+  const FOOTER_WORD_REVEAL_RANGE = 0.16;
   const LERP_FACTOR = 0.085;
 
   let cleanupActivePage = () => {
@@ -15,6 +16,9 @@
     document.body.classList.remove(BODY_CLASS);
     document.body.style.removeProperty("--footer-wave-progress");
     document.body.style.removeProperty("--footer-wave-offset-y");
+    document.body.style.removeProperty("--footer-word-opacity");
+    document.body.style.removeProperty("--footer-word-lift");
+    document.documentElement.classList.remove("is-safari");
   }
 
   function cleanupHomepage() {
@@ -35,11 +39,6 @@
         }, delayMs);
         ids.add(id);
         return id;
-      },
-      clear(id) {
-        if (id === null || typeof id === "undefined") return;
-        ids.delete(id);
-        window.clearTimeout(id);
       },
       clearAll() {
         ids.forEach((id) => window.clearTimeout(id));
@@ -75,8 +74,8 @@
       return;
     }
 
-    const docEl = document.documentElement;
     const body = document.body;
+    const docEl = document.documentElement;
     const ua = navigator.userAgent || "";
     const isSafari =
       /safari/i.test(ua) &&
@@ -89,200 +88,14 @@
     body.classList.add(BODY_CLASS);
     body.style.setProperty("--footer-wave-progress", "0");
     body.style.setProperty("--footer-wave-offset-y", "0px");
+    body.style.setProperty("--footer-word-opacity", "0");
+    body.style.setProperty("--footer-word-lift", "18px");
 
     const controller = new AbortController();
     const { signal } = controller;
     const timeouts = trackedTimeouts();
     const frames = trackedFrames();
     const cleanupTasks = [];
-
-    const heroShell = homeRoot.querySelector(".tx-landing__media-shell");
-    const heroPlayer = homeRoot.querySelector(".tx-landing__media");
-    let expandTimer = null;
-
-    if (heroShell) {
-      const positionExpandedHero = () => {
-        const wrap = heroShell.querySelector(".tx-landing__media-wrap");
-        if (!wrap) return;
-
-        const rect = wrap.getBoundingClientRect();
-        const currentCenterX = rect.left + rect.width / 2;
-        const currentCenterY = rect.top + rect.height / 2;
-        const targetCenterX = window.innerWidth / 2;
-        const targetCenterY = window.innerHeight * 0.62;
-        const dx = targetCenterX - currentCenterX;
-        const dy = targetCenterY - currentCenterY;
-
-        heroShell.style.setProperty("--hero-expand-x", `${dx.toFixed(1)}px`);
-        heroShell.style.setProperty("--hero-expand-y", `${dy.toFixed(1)}px`);
-      };
-
-      const clearExpandTimer = () => {
-        timeouts.clear(expandTimer);
-        expandTimer = null;
-      };
-
-      const collapseHeroPreview = () => {
-        clearExpandTimer();
-        heroShell.classList.remove("is-expanded");
-      };
-
-      const clearPointerFocusFromHero = () => {
-        const activeElement = document.activeElement;
-        if (!activeElement) return;
-        if (activeElement === heroPlayer || heroShell.contains(activeElement)) {
-          if (typeof activeElement.blur === "function") {
-            activeElement.blur();
-          }
-        }
-      };
-
-      const scheduleHeroExpansion = () => {
-        clearExpandTimer();
-        expandTimer = timeouts.add(() => {
-          positionExpandedHero();
-          heroShell.classList.add("is-expanded");
-          expandTimer = null;
-        }, EXPAND_DELAY_MS);
-      };
-
-      const onHeroResize = () => {
-        if (heroShell.classList.contains("is-expanded")) {
-          positionExpandedHero();
-        }
-      };
-
-      heroShell.addEventListener("pointerenter", scheduleHeroExpansion, { signal });
-      heroShell.addEventListener(
-        "pointerleave",
-        () => {
-          collapseHeroPreview();
-          clearPointerFocusFromHero();
-        },
-        { signal }
-      );
-      heroShell.addEventListener("focusin", scheduleHeroExpansion, { signal });
-      heroShell.addEventListener("focusout", collapseHeroPreview, { signal });
-      window.addEventListener("resize", onHeroResize, { signal });
-
-      cleanupTasks.push(() => {
-        clearExpandTimer();
-        heroShell.classList.remove("is-expanded");
-      });
-    }
-
-    if (heroPlayer) {
-      heroPlayer.muted = false;
-      heroPlayer.defaultMuted = false;
-      heroPlayer.volume = 1;
-
-      if (typeof heroPlayer.play === "function") {
-        const autoPlayPromise = heroPlayer.play();
-        if (autoPlayPromise && typeof autoPlayPromise.catch === "function") {
-          autoPlayPromise.catch(() => {
-            heroPlayer.muted = true;
-            heroPlayer.defaultMuted = true;
-
-            const mutedFallbackPromise = heroPlayer.play();
-            if (
-              mutedFallbackPromise &&
-              typeof mutedFallbackPromise.catch === "function"
-            ) {
-              mutedFallbackPromise.catch(() => {});
-            }
-          });
-        }
-      }
-
-      const enableHeroAudio = () => {
-        heroPlayer.muted = false;
-        heroPlayer.defaultMuted = false;
-        heroPlayer.volume = 1;
-
-        if (typeof heroPlayer.play === "function") {
-          const playPromise = heroPlayer.play();
-          if (playPromise && typeof playPromise.catch === "function") {
-            playPromise.catch(() => {});
-          }
-        }
-      };
-
-      window.addEventListener("pointerdown", enableHeroAudio, {
-        once: true,
-        passive: true,
-        signal,
-      });
-      window.addEventListener("keydown", enableHeroAudio, {
-        once: true,
-        signal,
-      });
-    }
-
-    const items = Array.from(homeRoot.querySelectorAll(".podcast-item"));
-    const bubbleTray = homeRoot.querySelector(".podcast-bubbles");
-
-    const resetOthers = (activeItem) => {
-      items.forEach((item) => {
-        const audioEl = item.querySelector(".podcast-audio");
-        const isActive = item === activeItem;
-        item.classList.toggle("active", isActive);
-        if (!isActive && audioEl) {
-          audioEl.pause();
-          audioEl.currentTime = 0;
-        }
-      });
-    };
-
-    items.forEach((item, index) => {
-      const bubble = item.querySelector(".podcast-bubble");
-      const audioEl = item.querySelector(".podcast-audio");
-      if (!bubble) return;
-
-      if (!bubble.style.getPropertyValue("--delay")) {
-        bubble.style.setProperty("--delay", (index * 0.12).toFixed(2));
-      }
-
-      if (audioEl) {
-        audioEl.playbackRate = 1.25;
-        audioEl.addEventListener("play", () => audioEl.classList.add("playing"), {
-          signal,
-        });
-        audioEl.addEventListener(
-          "pause",
-          () => audioEl.classList.remove("playing"),
-          { signal }
-        );
-      }
-
-      bubble.addEventListener(
-        "click",
-        () => {
-          resetOthers(item);
-          if (audioEl) {
-            audioEl.pause();
-            audioEl.currentTime = 0;
-          }
-        },
-        { signal }
-      );
-    });
-
-    if (items.length) {
-      resetOthers(items[0]);
-    }
-
-    if (bubbleTray) {
-      timeouts.add(() => bubbleTray.classList.remove("intro"), 1200);
-    }
-
-    cleanupTasks.push(() => {
-      items.forEach((item) => {
-        const audioEl = item.querySelector(".podcast-audio");
-        if (!audioEl) return;
-        audioEl.pause();
-        audioEl.currentTime = 0;
-      });
-    });
 
     const footer = homeRoot.querySelector(".footer");
     const footerBeyond = homeRoot.querySelector("[data-footer-beyond]");
@@ -291,12 +104,6 @@
       let currentScale = 0;
       let targetScale = 0;
       let footerFramePending = false;
-
-      if (isSafari) {
-        footerBeyond.querySelectorAll("g[filter]").forEach((group) => {
-          group.removeAttribute("filter");
-        });
-      }
 
       const clamp01 = (value) => Math.min(1, Math.max(0, value));
 
@@ -313,6 +120,12 @@
         const overlayHeight =
           footerBeyond.getBoundingClientRect().height || window.innerHeight;
         const waveOffsetPx = scale * overlayHeight;
+        const normalizedProgress = clamp01(scale / MAX_WAVE_SCALE);
+        const wordRevealProgress = clamp01(
+          (normalizedProgress - FOOTER_WORD_REVEAL_THRESHOLD) /
+            FOOTER_WORD_REVEAL_RANGE
+        );
+        const wordLiftPx = (1 - wordRevealProgress) * 18;
 
         footerBeyond.style.transform = `scaleY(${scale.toFixed(6)})`;
         body.style.setProperty("--footer-wave-progress", scale.toFixed(6));
@@ -320,6 +133,11 @@
           "--footer-wave-offset-y",
           `${waveOffsetPx.toFixed(2)}px`
         );
+        body.style.setProperty(
+          "--footer-word-opacity",
+          wordRevealProgress.toFixed(6)
+        );
+        body.style.setProperty("--footer-word-lift", `${wordLiftPx.toFixed(2)}px`);
       };
 
       const animateFooterBeyond = () => {

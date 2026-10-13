@@ -1,10 +1,14 @@
+---
+icon: lucide/database-zap
+---
+
 # Data Preparation Tools
 
-This page documents the Python tools used to create or reshape input data before preprocessing and modelling. Read each class docstring to understand accepted input formats, key arguments, and what artifact is produced at each step.
+This page of the application programming interface (API) reference documents the tools of the [Data Preparation Toolkit](../toolkits/data-preparation.md), which generate synthetic longitudinal cohorts and convert cohort files between formats. Each class docstring lists the accepted parameters and the artefact produced.
 
 ## Synthetic Data Generation
 
-## ::: ldt.data_preparation.tools.synthetic_data_generation.generators.trend_patterns.TrendPatterns
+## ::: long_toolkit.data_preparation.tools.synthetic_data_generation.generators.trend_patterns.TrendPatterns
     options:
       members:
         - prepare
@@ -13,13 +17,13 @@ This page documents the Python tools used to create or reshape input data before
         - default_feature_specs
         - default_class_proportions
 
-## ::: ldt.data_preparation.tools.synthetic_data_generation.generators.event_shock_recovery.EventShockRecovery
+## ::: long_toolkit.data_preparation.tools.synthetic_data_generation.generators.event_shock_recovery.EventShockRecovery
 
-## ::: ldt.data_preparation.tools.synthetic_data_generation.generators.piecewise_changepoint.PiecewiseChangepoint
+## ::: long_toolkit.data_preparation.tools.synthetic_data_generation.generators.piecewise_changepoint.PiecewiseChangepoint
 
-## ::: ldt.data_preparation.tools.synthetic_data_generation.generators.missing_data_scenarios.MissingDataScenarios
+## ::: long_toolkit.data_preparation.tools.synthetic_data_generation.generators.missing_data_scenarios.MissingDataScenarios
 
-## ::: ldt.data_preparation.tools.synthetic_data_generation.generators.harmonisation_challenge.HarmonisationChallenge
+## ::: long_toolkit.data_preparation.tools.synthetic_data_generation.generators.harmonisation_challenge.HarmonisationChallenge
 
 ## Data Conversion
 
@@ -36,37 +40,37 @@ for batch conversion).
 | `stata_to_csv` | `StataToCsv` |
 | `stata_to_parquet` | `StataToParquet` |
 
-## ::: ldt.data_preparation.tools.data_conversion.converters.csv_to_parquet.CsvToParquet
+## ::: long_toolkit.data_preparation.tools.data_conversion.converters.csv_to_parquet.CsvToParquet
     options:
       inherited_members: true
       members:
         - prepare
 
-## ::: ldt.data_preparation.tools.data_conversion.converters.csv_to_stata.CsvToStata
+## ::: long_toolkit.data_preparation.tools.data_conversion.converters.csv_to_stata.CsvToStata
     options:
       inherited_members: true
       members:
         - prepare
 
-## ::: ldt.data_preparation.tools.data_conversion.converters.parquet_to_csv.ParquetToCsv
+## ::: long_toolkit.data_preparation.tools.data_conversion.converters.parquet_to_csv.ParquetToCsv
     options:
       inherited_members: true
       members:
         - prepare
 
-## ::: ldt.data_preparation.tools.data_conversion.converters.parquet_to_stata.ParquetToStata
+## ::: long_toolkit.data_preparation.tools.data_conversion.converters.parquet_to_stata.ParquetToStata
     options:
       inherited_members: true
       members:
         - prepare
 
-## ::: ldt.data_preparation.tools.data_conversion.converters.stata_to_csv.StataToCsv
+## ::: long_toolkit.data_preparation.tools.data_conversion.converters.stata_to_csv.StataToCsv
     options:
       inherited_members: true
       members:
         - prepare
 
-## ::: ldt.data_preparation.tools.data_conversion.converters.stata_to_parquet.StataToParquet
+## ::: long_toolkit.data_preparation.tools.data_conversion.converters.stata_to_parquet.StataToParquet
     options:
       inherited_members: true
       members:

@@ -1,5 +1,9 @@
+---
+icon: lucide/box
+---
+
 # Standard Machine Learning Tools
 
-This page presents the standard machine learning API entry points for cross-sectional model training and evaluation. The class reference below explains the configuration parameters, expected data inputs, and core outputs needed to run reproducible ML experiments.
+This page of the application programming interface (API) reference documents the standard (non-longitudinal) modelling tool of the [Benchmarking and Modelling Toolkit](../toolkits/benchmarking-and-modelling.md), which evaluates one estimator on a flattened feature vector. The class docstring lists the configuration parameters, the expected input and the artefacts written.
 
-## ::: ldt.machine_learning.tools.standard_machine_learning.run.StandardMachineLearning
+## ::: long_toolkit.machine_learning.tools.standard_machine_learning.run.StandardMachineLearning

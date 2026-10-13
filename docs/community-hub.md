@@ -1,4 +1,10 @@
+---
+icon: lucide/users
+---
+
 # Community Hub
+
+`Long-Toolkit` is meant to grow with its users, through new tools within the existing toolkits and new toolkits for missing stages.
 
 <div class="grid cards" markdown>
 
@@ -6,32 +12,32 @@
 
     ---
 
-    Contribute to the API toolkit or the CLI, discuss ideas in issues, and build from source.
+    Contribute to the Python package or to the command-line interface (CLI), discuss ideas in issues, and build both from source.
 
-    [:octicons-arrow-right-24: Read contributing](CONTRIBUTING_DEV.md)
+    [:octicons-arrow-right-24: Read the contribution guide](contributing.md)
 
--   :material-palette:{ .lg .middle } **Branding & UX**
+-   :material-palette:{ .lg .middle } **Branding**
 
     ---
 
-    Figma workspace and brand direction for LDT-Toolkit.
+    Brand resources and the animated CLI header of Long-Toolkit.
 
-    [:octicons-arrow-right-24: Open branding](BRANDING.md)
+    [:octicons-arrow-right-24: Open branding](branding.md)
 
 -   :material-tag:{ .lg .middle } **Releases**
 
     ---
 
-    Latest published toolkit versions.
+    Published versions of the Python package and of the CLI.
 
-    [:octicons-arrow-right-24: Open releases](https://github.com/Longitudinal-Depression-Toolkit/ldt-toolkit/releases)
+    [:octicons-arrow-right-24: Open releases](https://github.com/Long-Toolkit/long-toolkit/releases)
 
 -   :material-package-variant-closed:{ .lg .middle } **PyPI Index**
 
     ---
 
-    Python package distribution entry for `ldt-toolkit`.
+    The Python package distribution entry for `long-toolkit`.
 
-    [:octicons-arrow-right-24: Open PyPI](https://pypi.org/project/ldt-toolkit/)
+    [:octicons-arrow-right-24: Open PyPI](https://pypi.org/project/long-toolkit/)
 
 </div>

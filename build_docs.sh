@@ -11,7 +11,7 @@ cd "$(dirname "$0")"
 
 uv venv
 uv sync
-uv run mkdocs build --strict
+uv run zensical build
 
 echo "Documentation built successfully in the 'site' directory."
-echo "To preview, run: uv run mkdocs serve"
+echo "To preview, run: uv run zensical serve"

@@ -1,0 +1,2261 @@
+{% extends "base.html" %}
+
+{% block tabs %} {{ super() }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+
+<style>
+    body.homepage-page {
+        overflow-x: clip;
+        color-scheme: light dark;
+        background: var(--homepage-bg);
+        color: var(--homepage-text);
+        --footer-wave-progress: 0;
+        --footer-wave-offset-y: 0px;
+        --footer-word-opacity: 0;
+        --footer-word-lift: 18px;
+        --homepage-shell-radius: 1rem;
+        --homepage-round-radius: 999px;
+        --homepage-bg: #fff6eb;
+        --homepage-bg-soft: #fffaf4;
+        --homepage-panel-start: #fffaf3;
+        --homepage-panel-end: #fff2e5;
+        --homepage-text: #252121;
+        --homepage-text-soft: rgba(76, 60, 67, 0.8);
+        --homepage-text-muted: rgba(67, 20, 7, 0.38);
+        --homepage-text-strong: #333;
+        --homepage-accent-rgb: 222 162 194;
+        --homepage-accent: rgb(var(--homepage-accent-rgb) / 1);
+        --homepage-accent-strong: rgb(var(--homepage-accent-rgb) / 1);
+        --homepage-accent-soft: rgb(var(--homepage-accent-rgb) / 0.18);
+        --homepage-accent-glow: rgb(var(--homepage-accent-rgb) / 1);
+        --homepage-surface: linear-gradient(180deg, rgba(255, 253, 251, 0.98), rgb(var(--homepage-accent-rgb) / 0.12));
+        --homepage-surface-border: rgb(var(--homepage-accent-rgb) / 0.28);
+        --homepage-surface-border-strong: var(--homepage-accent-strong);
+        --homepage-surface-highlight: rgba(255, 255, 255, 0.72);
+        --homepage-surface-shadow: rgba(96, 52, 72, 0.08);
+        --homepage-card-bg: rgba(255, 253, 251, 0.85);
+        --homepage-card-border: var(--homepage-accent-soft);
+        --homepage-card-shadow: 0 8px 20px rgba(96, 52, 72, 0.05);
+        --homepage-button-bg: rgb(45, 42, 38);
+        --homepage-button-fg: #fff6eb;
+        --homepage-button-border: rgba(255, 246, 235, 0.1);
+        --homepage-button-shadow: 0 10px 15px -3px rgba(45, 42, 38, 0.25), 0 4px 6px -2px rgba(45, 42, 38, 0.05);
+        --homepage-button-shadow-focus: 0 10px 15px -3px rgba(45, 42, 38, 0.25);
+        --homepage-icon: #252121;
+        --homepage-icon-soft: #d1d5db;
+        --homepage-icon-muted: #6b7280;
+        --homepage-icon-quiet: #78716c;
+        --homepage-icon-hover: #44403c;
+        --homepage-footer-fade: linear-gradient(to bottom, rgba(45, 42, 38, 0.1) 25%, rgba(45, 42, 38, 0));
+        --homepage-footer-wave: rgba(45, 42, 38, 0.05);
+        --homepage-footer-ink: rgba(45, 42, 38, 0.9);
+        --homepage-footer-outline: var(--homepage-accent-strong);
+        --homepage-footer-focus: var(--homepage-accent-strong);
+        --md-default-bg-color: var(--homepage-bg);
+        --md-default-fg-color: var(--homepage-text);
+        --md-primary-fg-color: var(--homepage-panel-start);
+        --md-primary-fg-color--light: var(--homepage-panel-start);
+        --md-primary-fg-color--dark: var(--homepage-panel-start);
+        --md-primary-bg-color: var(--homepage-text);
+        --md-primary-bg-color--light: var(--homepage-text);
+        --md-primary-bg-color--dark: var(--homepage-text);
+    }
+
+    body.homepage-page[data-md-color-scheme="slate"] {
+        --homepage-bg: #0e0e10;
+        --homepage-bg-soft: #18181b;
+        --homepage-panel-start: #232324;
+        --homepage-panel-end: #141416;
+        --homepage-text: #fff6eb;
+        --homepage-text-soft: rgba(255, 246, 235, 0.8);
+        --homepage-text-muted: rgba(255, 246, 235, 0.56);
+        --homepage-text-strong: #fff6eb;
+        --homepage-surface: linear-gradient(180deg, rgba(35, 35, 36, 0.98), rgba(14, 14, 16, 0.96));
+        --homepage-surface-border: rgba(255, 246, 235, 0.14);
+        --homepage-surface-border-strong: var(--homepage-accent-strong);
+        --homepage-surface-highlight: rgba(255, 255, 255, 0.12);
+        --homepage-surface-shadow: rgba(0, 0, 0, 0.35);
+        --homepage-card-bg: transparent;
+        --homepage-card-border: transparent;
+        --homepage-card-shadow: none;
+        --homepage-button-bg: #232324;
+        --homepage-button-fg: #fff6eb;
+        --homepage-button-border: rgba(255, 255, 255, 0.08);
+        --homepage-button-shadow: 0 14px 24px rgba(0, 0, 0, 0.36), 0 4px 10px rgba(0, 0, 0, 0.2);
+        --homepage-button-shadow-focus: 0 14px 24px rgba(0, 0, 0, 0.36);
+        --homepage-icon: #fff6eb;
+        --homepage-icon-soft: rgba(255, 246, 235, 0.72);
+        --homepage-icon-muted: #fff6eb;
+        --homepage-icon-quiet: rgba(255, 246, 235, 0.72);
+        --homepage-icon-hover: #ffffff;
+        --homepage-footer-fade: linear-gradient(to bottom, rgba(255, 246, 235, 0.22) 25%, rgba(255, 246, 235, 0));
+        --homepage-footer-wave: rgba(255, 246, 235, 0.08);
+        --homepage-footer-ink: rgba(255, 246, 235, 0.88);
+        --homepage-footer-outline: var(--homepage-accent-strong);
+        --homepage-footer-focus: var(--homepage-accent-strong);
+        --md-default-bg-color: var(--homepage-bg);
+        --md-default-fg-color: var(--homepage-text);
+        --md-primary-fg-color: var(--homepage-panel-start);
+        --md-primary-fg-color--light: var(--homepage-panel-start);
+        --md-primary-fg-color--dark: var(--homepage-panel-start);
+        --md-primary-bg-color: var(--homepage-text);
+        --md-primary-bg-color--light: var(--homepage-text);
+        --md-primary-bg-color--dark: var(--homepage-text);
+    }
+
+    body.homepage-page .md-typeset a {
+        color: var(--homepage-text);
+    }
+
+    body.homepage-page .md-content__inner {
+        margin-bottom: 0;
+        padding: 2.2rem 0;
+    }
+
+    body.homepage-page .md-content__inner:before {
+        display: none;
+    }
+
+    body.homepage-page .md-header {
+        position: initial;
+        background: var(--homepage-bg);
+        box-shadow: none !important;
+        border-bottom: none !important;
+    }
+
+    body.homepage-page .md-tabs {
+        background: var(--homepage-bg);
+        box-shadow: none !important;
+        border-bottom: none !important;
+    }
+
+    body.homepage-page .md-header__inner,
+    body.homepage-page .md-tabs__list {
+        box-shadow: none !important;
+    }
+
+    body.homepage-page .md-header--shadow,
+    body.homepage-page .md-tabs--shadow {
+        box-shadow: none !important;
+    }
+
+    body.homepage-page .md-main__inner {
+        margin: 0;
+    }
+
+    body.homepage-page .md-main__inner > .md-content,
+    body.homepage-page .md-main__inner > .md-sidebar--secondary {
+        display: none;
+    }
+
+    @media screen and (min-width: 60em) {
+        body.homepage-page .md-sidebar--secondary {
+            display: none;
+        }
+    }
+
+    @media screen and (min-width: 76.25em) {
+        body.homepage-page .md-sidebar--primary {
+            display: none;
+        }
+    }
+
+    body.homepage-page .md-footer {
+        display: none;
+    }
+
+    body.homepage-page .md-button {
+        border-radius: 200px !important;
+    }
+
+    .homepage {
+        background: var(--homepage-bg);
+    }
+
+    .klack-button {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        max-height: 2.75rem;
+        padding: 1rem 1.25rem 1rem 3rem;
+        background-color: var(--homepage-button-bg);
+        color: var(--homepage-button-fg) !important;
+        font-size: 1.125rem;
+        font-weight: 700;
+        border-radius: var(--homepage-shell-radius);
+        border: 1px solid var(--homepage-button-border);
+        text-decoration: none;
+        box-shadow: var(--homepage-button-shadow);
+        transition: all 0.3s ease;
+    }
+
+    .klack-button,
+    .klack-button:hover,
+    .klack-button:focus,
+    .klack-button:active,
+    .klack-button * {
+        text-decoration: none !important;
+        background-image: none !important;
+        box-shadow: none;
+    }
+
+    .klack-button:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: var(--homepage-shell-radius);
+        box-shadow: var(--homepage-button-shadow-focus);
+        display: none;
+    }
+
+    @media (min-width: 640px) {
+        .klack-button:after {
+            display: block;
+        }
+    }
+
+    .klack-button .icon {
+        text-emphasis: filled;
+        position: absolute;
+        left: 1.25rem;
+        transform: translateX(0);
+        opacity: 1;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .klack-button .text {
+        transform: translateX(0);
+        margin-right: -1rem;
+        color: var(--homepage-button-fg) !important;
+        transition: transform 0.3s ease;
+    }
+
+    .klack-button .arrow {
+        display: flex;
+        justify-content: center;
+        transform: translateX(100%);
+        opacity: 0;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .klack-button:hover .icon {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    .klack-button:hover .text {
+        transform: translateX(-2rem);
+    }
+
+    .klack-button:hover .arrow {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    .klack-button:focus {
+        outline: none;
+    }
+
+    .tx-container,
+    .longtk-section,
+    .social-icons-stack {
+        position: relative;
+        transform: translate3d(0, calc(var(--footer-wave-offset-y, 0px) * -1), 0);
+        will-change: transform;
+    }
+
+    .tx-container {
+        background: var(--homepage-bg) !important;
+    }
+
+    .longtk-section,
+    .social-icons-stack {
+        z-index: 3;
+    }
+
+    body.homepage-page > input[data-md-toggle="search"]:checked ~ .md-header {
+        position: relative !important;
+        z-index: 1200 !important;
+    }
+
+    body.homepage-page > input[data-md-toggle="search"]:checked ~ .md-header .md-search__inner,
+    body.homepage-page > input[data-md-toggle="search"]:checked ~ .md-header .md-search__overlay,
+    body.homepage-page > input[data-md-toggle="search"]:checked ~ .md-header .md-search__form {
+        z-index: 1201 !important;
+    }
+
+    body.homepage-page > input[data-md-toggle="search"]:checked ~ .md-header .md-search__output {
+        z-index: 1202 !important;
+    }
+
+    html[data-md-state~="search"] .tx-container,
+    html[data-md-state~="search"] .longtk-section,
+    html[data-md-state~="search"] .social-icons-stack,
+    body[data-md-state~="search"] .tx-container,
+    body[data-md-state~="search"] .longtk-section,
+    body[data-md-state~="search"] .social-icons-stack,
+    body.homepage-page > input[data-md-toggle="search"]:checked ~ .md-container .tx-container,
+    body.homepage-page > input[data-md-toggle="search"]:checked ~ .md-container .longtk-section,
+    body.homepage-page > input[data-md-toggle="search"]:checked ~ .md-container .social-icons-stack {
+        z-index: 1 !important;
+    }
+
+    .star-rating {
+        display: flex;
+        align-items: center;
+        justify-content: left;
+        cursor: grab;
+        width: fit-content;
+        text-decoration: none;
+    }
+
+    .star-rating,
+    .star-rating:hover,
+    .star-rating:focus,
+    .star-rating:active,
+    .star-rating * {
+        text-decoration: none !important;
+        background-image: none !important;
+    }
+
+    .star-rating .left-svg,
+    .star-rating .right-svg,
+    .star-rating .star-icon {
+        width: 38px;
+        height: 38px;
+        fill: var(--homepage-icon-soft);
+        transition: fill 0.3s ease, transform 0.3s ease;
+    }
+
+    .star-rating .star-icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 0.2rem;
+    }
+
+    .star-rating:hover .left-svg,
+    .star-rating:hover .right-svg,
+    .star-rating:hover .star-icon {
+        fill: var(--homepage-icon-muted);
+    }
+
+    .star-rating:hover .left-svg {
+        transform: translateX(-4px) scale(1.05);
+    }
+
+    .star-rating:hover .right-svg {
+        transform: translateX(4px) scale(1.05);
+    }
+
+    .star-rating:hover .star-icon {
+        transform: scale(1.1);
+    }
+
+    .star-content {
+        display: flex;
+        align-items: center;
+    }
+
+    .star-text {
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--homepage-text-muted);
+        transition: color 0.3s ease;
+    }
+
+    .star-text .number {
+        color: var(--homepage-text-muted);
+    }
+
+    .star-rating:hover .star-text {
+        color: var(--homepage-icon-hover);
+    }
+
+    .star-rating:hover .star-text .number {
+        color: var(--homepage-icon-hover);
+    }
+
+    .joss-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        width: fit-content;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    .badge-row {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 2.25rem;
+    }
+
+    .joss-link,
+    .joss-link:hover,
+    .joss-link:focus,
+    .joss-link:active,
+    .joss-link * {
+        text-decoration: none !important;
+        background-image: none !important;
+    }
+
+    .joss-top-text {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--homepage-icon-quiet);
+        margin: 0 0 5px;
+        text-align: center;
+        transition: color 0.3s ease;
+    }
+
+    .joss-link:hover .joss-top-text {
+        color: var(--homepage-icon-hover);
+    }
+
+    .joss-content {
+        position: relative;
+        width: 100px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .joss-svg {
+        position: absolute;
+        left: 0;
+        width: 28px;
+        height: 28px;
+        fill: var(--homepage-icon-quiet);
+        transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .joss-text {
+        position: absolute;
+        left: 36px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--homepage-text-muted);
+        transition: left 0.3s ease, transform 0.3s ease;
+    }
+
+    .joss-link:hover .joss-svg {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    .joss-link:hover .joss-text {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .longtk-section {
+        margin: 0.5rem auto 3rem;
+        max-width: 1100px;
+        text-align: center;
+    }
+
+    body.homepage-page[data-md-color-scheme="slate"] .longtk-section {
+    }
+
+    .social-icons-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: fit-content;
+        margin: clamp(1.25rem, 4vh, 2rem) auto clamp(4.5rem, 11vh, 7rem);
+        position: relative;
+        z-index: 4;
+    }
+
+    .social-icons-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        width: fit-content;
+        margin: 0 auto;
+    }
+
+    .social-scroll-hint {
+        margin: 0.65rem 0 0;
+        color: var(--homepage-text-muted);
+        font-size: 0.74rem;
+        line-height: 1rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        user-select: none;
+        white-space: nowrap;
+        opacity: 0.9;
+        transition: color 0.28s ease, opacity 0.28s ease;
+    }
+
+    .social-icons-stack:hover .social-scroll-hint,
+    .social-icons-stack:focus-within .social-scroll-hint {
+        color: var(--homepage-footer-outline);
+        opacity: 1;
+    }
+
+    .social-icon-link {
+        display: inline-flex;
+        align-items: center;
+        outline: none;
+        transition: all 0.3s;
+        background-color: var(--homepage-footer-wave);
+        padding: 0.5rem;
+        border-radius: 0.40rem;
+        color: var(--homepage-icon-quiet);
+    }
+
+    .social-icon-link:hover {
+        color: var(--homepage-icon-hover);
+    }
+
+    .social-icon-link:focus {
+        box-shadow: 0 0 0 2px var(--homepage-footer-focus);
+    }
+
+    .social-icon-bottom {
+        width: 24px;
+        height: 24px;
+        transition: all 0.3s ease-out;
+    }
+
+    .footer {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0 2rem 3.25rem;
+        margin-top: 0;
+        min-height: clamp(12rem, 24vw, 19rem);
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    @media (min-width: 640px) {
+        .footer {
+            min-height: clamp(13rem, 22vw, 20rem);
+            padding-bottom: clamp(5rem, 8vw, 7rem);
+        }
+    }
+
+    .footer-beyond-overlay {
+        position: fixed;
+        left: 0;
+        right: 0;
+        width: 100vw;
+        margin-left: 0;
+        bottom: 0;
+        display: flex;
+        align-items: flex-end;
+        height: 175px;
+        pointer-events: none;
+        overflow: hidden;
+        transform-origin: bottom center;
+        transform: scaleY(0);
+        will-change: transform;
+        opacity: 0.95;
+        z-index: 2;
+    }
+
+    .footer-beyond-svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    html.is-safari .footer-beyond-svg g[filter] {
+        filter: none !important;
+    }
+
+    @media (min-width: 600px) {
+        .footer-beyond-overlay {
+            height: 240px;
+        }
+    }
+
+    @media (min-width: 1000px) {
+        .footer-beyond-overlay {
+            height: 46vh;
+        }
+    }
+
+    .footer-text {
+        position: absolute;
+        bottom: clamp(1rem, 4vh, 3.75rem);
+        left: 50%;
+        margin-bottom: 0;
+        transform: translateX(-50%) translateY(calc(var(--footer-wave-offset-y, 0px) * -1 + var(--footer-word-lift, 18px)));
+        pointer-events: none;
+        user-select: none;
+        overflow: hidden;
+        white-space: nowrap;
+        background: var(--homepage-footer-fade);
+        -webkit-background-clip: text;
+        background-clip: text;
+        font-size: 4rem;
+        font-weight: 900;
+        line-height: 1;
+        color: transparent;
+        opacity: var(--footer-word-opacity, 0);
+        display: none;
+        z-index: 3;
+        will-change: transform, opacity;
+        transition: opacity 0.22s linear;
+    }
+
+    @media (min-width: 640px) {
+        .footer-text {
+            display: block;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .footer-text {
+            font-size: 8.5rem;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .footer-text {
+            font-size: 10.25rem;
+        }
+    }
+
+    /* Badge labels such as "Homebrew" need more room than "JOSS". */
+    .joss-content {
+        width: 116px;
+    }
+
+
+
+    /* Long-Toolkit homepage layer (longtk-*): serif display type, centred hero,
+       numbered feature list beside a window, dotted panel with mono chips. */
+    body.homepage-page {
+        --longtk-serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+        --longtk-mono: var(--md-code-font-family, "IBM Plex Mono"), ui-monospace, monospace;
+        --longtk-line: rgba(37, 33, 33, 0.1);
+        --longtk-muted: rgba(37, 33, 33, 0.55);
+        --longtk-faint: rgba(37, 33, 33, 0.3);
+        --longtk-window: #fffdf9;
+        --longtk-window-bar: rgba(37, 33, 33, 0.04);
+    }
+
+    body.homepage-page[data-md-color-scheme="slate"] {
+        --longtk-line: rgba(255, 246, 235, 0.12);
+        --longtk-muted: rgba(255, 246, 235, 0.6);
+        --longtk-faint: rgba(255, 246, 235, 0.32);
+        --longtk-window: #151517;
+        --longtk-window-bar: rgba(255, 246, 235, 0.04);
+    }
+
+    .joss-text {
+        white-space: nowrap;
+    }
+
+    .longtk-hero {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 3.2rem 1rem 1rem;
+        overflow: hidden;
+    }
+
+    .longtk-hero__stage {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        margin-top: 0.4rem;
+    }
+
+    .longtk-hero__word {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        z-index: 0;
+        transform: translateX(-50%);
+        font-family: var(--longtk-serif);
+        font-size: clamp(8rem, 24vw, 20rem);
+        font-weight: 500;
+        letter-spacing: -0.06em;
+        line-height: 0.8;
+        color: rgb(var(--homepage-accent-rgb) / 0.22);
+        pointer-events: none;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    .md-typeset .longtk-hero__title {
+        position: relative;
+        z-index: 1;
+        margin: 0;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        line-height: 1.3;
+        color: var(--homepage-text);
+    }
+
+    .md-typeset .longtk-hero__title mark {
+        background-color: transparent;
+        background-image: linear-gradient(180deg, transparent 0 52%, var(--homepage-accent-strong) 52% 100%);
+        font-weight: 800;
+        color: var(--homepage-text);
+        padding: 0 0.04em;
+    }
+
+    .md-typeset .longtk-hero__title span {
+        display: block;
+    }
+
+    .md-typeset .longtk-hero__title span + span {
+        font-weight: 300;
+        font-style: italic;
+    }
+
+    .md-typeset .longtk-hero__title abbr {
+        text-decoration: none;
+        border: 0;
+        cursor: help;
+    }
+
+    .longtk-hero__actions {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem 1.6rem;
+        margin-top: clamp(2.6rem, 5.5vw, 4.6rem);
+    }
+
+    .longtk-hero__actions .badge-row {
+        align-items: center;
+        gap: 1.4rem;
+    }
+
+    .longtk-hero__window {
+        position: relative;
+        z-index: 1;
+        width: min(920px, 100%);
+        margin: clamp(2rem, 5vw, 4.2rem) auto 0;
+    }
+
+    .longtk-window {
+        border: 1px solid var(--longtk-line);
+        border-radius: 14px;
+        background: var(--longtk-window);
+        box-shadow: 0 30px 60px rgba(37, 33, 33, 0.12), 0 2px 6px rgba(37, 33, 33, 0.05);
+        overflow: hidden;
+        text-align: left;
+    }
+
+    .longtk-window__bar {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.7rem 0.9rem;
+        background: var(--longtk-window-bar);
+        border-bottom: 1px solid var(--longtk-line);
+        font-family: var(--longtk-mono);
+        font-size: 0.72rem;
+        color: var(--longtk-muted);
+    }
+
+    .longtk-window__dot {
+        width: 0.68rem;
+        height: 0.68rem;
+        border-radius: 999px;
+        background: var(--longtk-faint);
+    }
+
+    .longtk-window__title {
+        margin-left: 0.5rem;
+    }
+
+    .longtk-window__body {
+        padding: 1rem 1.1rem 1.2rem;
+        color: var(--homepage-text);
+    }
+
+    .longtk-section {
+        max-width: 1120px;
+        margin: 5rem auto;
+        padding: 0 1.25rem;
+    }
+
+    .longtk-heading {
+        margin: 0 0 2.6rem;
+        text-align: center;
+        font-family: var(--longtk-serif);
+        font-weight: 500;
+        font-size: clamp(2.1rem, 4vw, 3rem);
+        letter-spacing: -0.05em;
+        line-height: 1.08;
+        color: var(--homepage-text);
+    }
+
+    .longtk-scroller.is-scroll-driven {
+        height: 300vh;
+    }
+
+    .longtk-scroller.is-scroll-driven .longtk-sticky {
+        position: sticky;
+        top: 0;
+        display: flex;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .longtk-scroller.is-scroll-driven .longtk-section--steps {
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .longtk-steps {
+        display: grid;
+        grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+        gap: clamp(1.5rem, 4vw, 4rem);
+        align-items: center;
+        text-align: left;
+    }
+
+    .longtk-steps__list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.3rem;
+        margin: 0 !important;
+        padding: 0;
+        list-style: none;
+    }
+
+    .longtk-step {
+        position: relative;
+        margin: 0 !important;
+        padding-left: 1.1rem;
+    }
+
+    .longtk-step::before,
+    .longtk-step::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 2px;
+        border-radius: 2px;
+    }
+
+    .longtk-step::before {
+        background: var(--longtk-line);
+    }
+
+    .longtk-step::after {
+        background: var(--homepage-text);
+        transform: scaleY(var(--longtk-progress, 0));
+        transform-origin: top;
+        transition: transform 0.15s linear;
+    }
+
+    .longtk-scroller:not(.is-scroll-driven) .longtk-step.is-active::after {
+        transform: scaleY(1);
+    }
+
+    .longtk-step__head {
+        all: unset;
+        display: block;
+        cursor: pointer;
+    }
+
+    .longtk-step__more {
+        display: grid;
+        grid-template-rows: 0fr;
+        opacity: 0;
+        transition: grid-template-rows 0.45s ease, opacity 0.35s ease;
+    }
+
+    .longtk-step__more > div {
+        overflow: hidden;
+    }
+
+    .longtk-step.is-active .longtk-step__more {
+        grid-template-rows: 1fr;
+        opacity: 1;
+    }
+
+    .longtk-step__number {
+        display: block;
+        font-family: var(--longtk-mono);
+        font-size: 0.72rem;
+        color: var(--longtk-faint);
+    }
+
+    .longtk-step__title {
+        display: block;
+        margin-top: 0.2rem;
+        font-family: var(--longtk-serif);
+        font-size: 1.6rem;
+        font-weight: 500;
+        letter-spacing: -0.035em;
+        line-height: 1.15;
+        color: var(--longtk-faint);
+        transition: color 0.25s ease;
+    }
+
+    .longtk-step__text {
+        margin: 0.5rem 0 0;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        color: var(--longtk-muted);
+    }
+
+    .longtk-step__link {
+        display: inline-block;
+        margin-top: 0.5rem;
+        font-family: var(--longtk-mono);
+        font-size: 0.7rem;
+        color: var(--homepage-text) !important;
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+    }
+
+
+
+    .longtk-step.is-active .longtk-step__title {
+        color: var(--homepage-text);
+    }
+
+    .longtk-step.is-active .longtk-step__number {
+        color: var(--longtk-muted);
+    }
+
+
+
+    .longtk-step__head:focus-visible {
+        outline: 2px solid var(--homepage-accent-strong);
+        outline-offset: 4px;
+    }
+
+    .longtk-code {
+        margin: 0;
+        font-family: var(--longtk-mono);
+        font-size: 0.66rem;
+        line-height: 1.6;
+        white-space: pre;
+        overflow-x: auto;
+        background: transparent;
+        color: var(--homepage-text);
+    }
+
+    .longtk-window__body--stack {
+        display: grid;
+    }
+
+    .longtk-window__body--stack .longtk-code {
+        grid-area: 1 / 1;
+        opacity: 0;
+        transform: translateY(6px);
+        visibility: hidden;
+        transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s;
+    }
+
+    .longtk-window__body--stack .longtk-code.is-active {
+        opacity: 1;
+        transform: none;
+        visibility: visible;
+        transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s;
+    }
+
+    .longtk-code--tui {
+        line-height: 1.75;
+    }
+
+    .longtk-caret {
+        display: inline-block;
+        width: 0.5em;
+        height: 1.1em;
+        margin-left: 0.1em;
+        vertical-align: text-bottom;
+        background: rgb(var(--homepage-accent-rgb) / 1);
+        animation: longtk-caret 1.1s steps(1) infinite;
+    }
+
+    @keyframes longtk-caret {
+        50% { opacity: 0; }
+    }
+
+    .longtk-lead {
+        max-width: 640px;
+        margin: -1.6rem auto 2.4rem;
+        text-align: center;
+        font-size: 0.95rem;
+        line-height: 1.55;
+        color: var(--longtk-muted);
+    }
+
+    .longtk-modes {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.4rem;
+        text-align: left;
+    }
+
+    .longtk-mode {
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+        padding: 1.6rem;
+        border: 1px solid var(--longtk-line);
+        border-radius: 18px;
+    }
+
+    .longtk-mode__label {
+        font-family: var(--longtk-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--longtk-muted);
+    }
+
+    .longtk-mode__title {
+        margin: 0;
+        font-family: var(--longtk-serif);
+        font-size: 1.7rem;
+        font-weight: 500;
+        letter-spacing: -0.035em;
+        line-height: 1.1;
+        color: var(--homepage-text);
+    }
+
+    .longtk-mode__text {
+        margin: 0 0 0.4rem;
+        font-size: 0.85rem;
+        line-height: 1.55;
+        color: var(--longtk-muted);
+    }
+
+    .longtk-mode .longtk-window {
+        flex: 1;
+        box-shadow: 0 16px 36px rgba(37, 33, 33, 0.08);
+    }
+
+    .longtk-mode__link {
+        margin-top: 0.3rem;
+        font-family: var(--longtk-mono);
+        font-size: 0.7rem;
+        color: var(--homepage-text) !important;
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+    }
+
+
+
+    .longtk-code .k { color: rgb(var(--homepage-accent-rgb) / 1); }
+    .longtk-code .s { color: var(--longtk-muted); }
+    .longtk-code .c { color: var(--longtk-faint); }
+
+    .longtk-panel {
+        position: relative;
+        padding: 3.6rem 1.5rem 3.4rem;
+        text-align: center;
+    }
+
+    .longtk-panel__border {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        pointer-events: none;
+        stroke: var(--longtk-muted);
+    }
+
+    .longtk-panel__badge {
+        position: absolute;
+        left: 50%;
+        z-index: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 0.9rem;
+        background: var(--homepage-bg);
+        color: var(--longtk-muted);
+    }
+
+    .longtk-panel__badge--top {
+        top: 0;
+        transform: translate(-50%, -50%);
+    }
+
+    .longtk-panel__badge--bottom {
+        bottom: 0;
+        transform: translate(-50%, 50%);
+        font-weight: 700;
+        font-size: 0.95rem;
+        letter-spacing: -0.02em;
+        color: var(--homepage-text);
+    }
+
+    .longtk-panel__icon {
+        width: 1.9rem;
+        height: 1.9rem;
+    }
+
+    .longtk-panel__heading {
+        margin: 0.8rem 0 0;
+        font-family: var(--longtk-serif);
+        font-weight: 500;
+        font-size: clamp(2rem, 4vw, 2.9rem);
+        letter-spacing: -0.05em;
+        line-height: 1.1;
+        color: var(--homepage-text);
+    }
+
+    .longtk-marquee {
+        margin: 1.4rem -1.5rem;
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+        mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    }
+
+    .longtk-marquee__track {
+        display: flex;
+        gap: 0.7rem;
+        width: max-content;
+        animation: longtk-marquee 48s linear infinite;
+    }
+
+    .longtk-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.42rem 0.7rem;
+        border: 1px solid var(--longtk-line);
+        border-radius: 999px;
+        background: var(--longtk-window);
+        font-family: var(--longtk-mono);
+        font-size: 0.74rem;
+        color: var(--homepage-text);
+        white-space: nowrap;
+    }
+
+    .longtk-chip__tag {
+        padding: 0.1rem 0.42rem;
+        border-radius: 999px;
+        background: var(--longtk-window-bar);
+        color: var(--longtk-muted);
+    }
+
+    .longtk-chip--baseline .longtk-chip__tag {
+        background: rgb(var(--homepage-accent-rgb) / 0.35);
+        color: var(--homepage-text);
+    }
+
+    .longtk-panel__text {
+        max-width: 560px;
+        margin: 0 auto;
+        font-size: 1rem;
+        line-height: 1.55;
+        color: var(--longtk-muted);
+    }
+
+    .longtk-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 1.4rem;
+        padding: 0.5rem 0.95rem;
+        border-radius: 999px;
+        background: var(--longtk-window-bar);
+        border: 1px solid var(--longtk-line);
+        font-size: 0.85rem;
+        color: var(--homepage-text) !important;
+        text-decoration: none !important;
+    }
+
+    .longtk-pill:hover {
+        border-color: var(--homepage-text);
+    }
+
+    @keyframes longtk-marquee {
+        from { transform: translateX(0); }
+        to { transform: translateX(-50%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .longtk-marquee__track,
+        .longtk-caret {
+            animation: none;
+        }
+
+        .longtk-step__more,
+        .longtk-step::after,
+        .longtk-window__body--stack .longtk-code {
+            transition: none;
+        }
+    }
+
+    @media screen and (max-width: 860px) {
+        .longtk-steps,
+        .longtk-modes {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .longtk-mode {
+            padding: 1.2rem;
+        }
+
+        .longtk-code {
+            font-size: 0.6rem;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    /* Motivation quote. */
+    .longtk-section--quote {
+        margin-top: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .longtk-quote {
+        max-width: 860px;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    .longtk-quote__text {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        font-family: var(--longtk-serif);
+        font-size: clamp(1.35rem, 2.6vw, 1.95rem);
+        font-weight: 400;
+        letter-spacing: -0.03em;
+        line-height: 1.3;
+        color: var(--homepage-text);
+    }
+
+    .longtk-quote__text p {
+        margin: 0;
+    }
+
+    .longtk-quote__text p::before {
+        content: "\201C";
+    }
+
+    .longtk-quote__text p::after {
+        content: "\201D";
+    }
+
+    .longtk-quote__author {
+        margin-top: 1.4rem;
+        font-family: var(--longtk-mono);
+        font-size: 0.72rem;
+        color: var(--longtk-muted);
+    }
+
+    .longtk-quote__author a {
+        color: inherit !important;
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+    }
+
+    /* Code window column, with the issue link under the window. */
+    .longtk-steps__side {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+        min-width: 0;
+    }
+
+    .longtk-subheading {
+        display: block;
+        width: fit-content;
+        margin: -2rem auto 2.4rem;
+        font-family: var(--longtk-mono);
+        font-size: 0.72rem;
+        text-align: center;
+        color: var(--longtk-muted) !important;
+        text-decoration: none !important;
+        transition: color 0.2s ease;
+    }
+
+    .longtk-subheading:hover,
+    .longtk-subheading:focus-visible {
+        color: var(--homepage-text) !important;
+    }
+
+    /* Social icons that lead to two profiles open a small menu. */
+    .social-icon-group {
+        position: relative;
+        display: inline-flex;
+    }
+
+    button.social-icon-link {
+        border: 0;
+        cursor: pointer;
+        font: inherit;
+    }
+
+    .social-menu {
+        position: absolute;
+        bottom: calc(100% + 0.5rem);
+        left: 50%;
+        z-index: 5;
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        min-width: 8.5rem;
+        padding: 0.35rem;
+        border: 1px solid var(--longtk-line);
+        border-radius: 0.6rem;
+        background: var(--longtk-window);
+        box-shadow: 0 12px 28px rgba(37, 33, 33, 0.12);
+        opacity: 0;
+        visibility: hidden;
+        transform: translate(-50%, 4px);
+        transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+    }
+
+    .social-menu::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        height: 0.6rem;
+    }
+
+    .social-icon-group:hover .social-menu,
+    .social-icon-group:focus-within .social-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, 0);
+        transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s;
+    }
+
+    .social-menu a {
+        padding: 0.35rem 0.55rem;
+        border-radius: 0.4rem;
+        font-size: 0.72rem;
+        white-space: nowrap;
+        color: var(--homepage-text) !important;
+        text-decoration: none !important;
+    }
+
+    .social-menu a:hover,
+    .social-menu a:focus-visible {
+        background: var(--longtk-window-bar);
+    }
+</style>
+<script>
+    document.body.classList.add("homepage-page");
+    document.body.style.setProperty("--footer-wave-progress", "0");
+    document.body.style.setProperty("--footer-wave-offset-y", "0px");
+    document.body.style.setProperty("--footer-word-opacity", "0");
+    document.body.style.setProperty("--footer-word-lift", "18px");
+</script>
+
+<div class="homepage" data-homepage-root>
+
+<section class="tx-container">
+    <div class="md-grid md-typeset">
+        <div class="longtk-hero">
+            <h1 class="longtk-hero__title">
+                <span><mark>Long-Toolkit</mark></span>
+                <span>Your Hub, via <abbr title="Application Programming Interface">API</abbr> or <abbr title="Command-Line Interface">CLI</abbr>, of Toolkits</span>
+                <span>for Longitudinal Data</span>
+            </h1>
+            <div class="longtk-hero__stage">
+            <div class="longtk-hero__word" aria-hidden="true">Long</div>
+            <div class="longtk-hero__actions">
+                <a class="klack-button group" href="getting-started/" aria-label="Get Started">
+                        <div class="icon">
+                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>
+                            </svg>
+                        </div>
+                        <div class="text">Get Started</div>
+                        <div class="arrow">
+                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" width="34" height="34" fill="none" stroke="currentColor" viewBox="0 0 16 16" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8"/>
+                            </svg>
+                        </div>
+                    </a>
+                <a class="star-rating" href="https://github.com/Long-Toolkit/long-toolkit/stargazers" aria-label="GitHub stars">
+                        <svg class="left-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" aria-hidden="true">
+                            <path d="M16.247 24.571c-.68-.058-1.523.13-2.098.48-.246.142-.28.364-.07.552.527.48 1.336.843 2.027.89.715.094 1.57-.129 2.145-.562.188-.13.2-.328.023-.492-.515-.48-1.324-.82-2.027-.868Zm2.461-3.96c-.375.574-.586 1.417-.562 2.097.046.715.375 1.535.832 2.04.152.175.34.175.492-.013.457-.539.703-1.394.633-2.12-.047-.68-.387-1.489-.856-2.028-.176-.21-.387-.2-.539.023Zm-5.765.785c-.645-.235-1.524-.258-2.18-.059-.258.082-.328.281-.188.516.387.597 1.078 1.148 1.723 1.382.656.27 1.547.27 2.215-.011.223-.082.281-.258.152-.469-.375-.598-1.066-1.137-1.722-1.36Zm3.374-3.188c-.503.457-.937 1.207-1.066 1.875-.152.703-.047 1.582.27 2.18.093.222.28.258.48.117.563-.41 1.02-1.172 1.137-1.898.14-.668.023-1.547-.293-2.18-.106-.258-.328-.293-.527-.094ZM8.01 16.86c.094.68.504 1.477 1.008 1.97.492.515 1.3.866 2.027.89.234.012.363-.14.328-.375-.117-.715-.527-1.477-1.031-1.934-.504-.48-1.277-.855-1.957-.937-.281-.035-.422.117-.375.386Zm6.715-1.007a3.872 3.872 0 0 0-1.735 1.289c-.421.55-.668 1.383-.644 2.11.023.222.176.339.41.304.703-.164 1.441-.668 1.816-1.278.387-.597.645-1.43.598-2.12 0-.282-.176-.4-.445-.305Zm-1.957-2.742c-.551.445-1.008 1.195-1.149 1.886-.035.211.082.375.305.387.726.023 1.559-.293 2.086-.762.527-.457.996-1.219 1.148-1.898.036-.258-.105-.434-.363-.422-.703.059-1.512.363-2.027.809ZM8.02 11.575a3.69 3.69 0 0 0 .492 2.157c.351.632 1.043 1.183 1.723 1.37.21.071.398-.046.421-.28.07-.669-.129-1.524-.504-2.133-.375-.586-1.043-1.149-1.664-1.395-.246-.105-.445 0-.468.281Zm5.39-2.402c-.668.234-1.36.762-1.734 1.371-.129.188-.059.387.152.48.668.27 1.547.27 2.215 0 .68-.257 1.383-.82 1.723-1.417.14-.211.07-.41-.188-.493-.668-.187-1.535-.175-2.168.059Zm-3.937-3.07c-.305.644-.422 1.511-.293 2.191.129.715.586 1.465 1.172 1.887.175.14.363.082.48-.13.305-.608.41-1.476.258-2.167-.14-.68-.586-1.43-1.078-1.899-.188-.164-.41-.117-.54.118Zm6.058-.305c-.691.129-1.453.574-1.886 1.113-.141.164-.106.364.082.492.62.364 1.5.48 2.191.293.691-.152 1.453-.609 1.898-1.125.176-.21.13-.421-.117-.527a3.795 3.795 0 0 0-2.168-.246Zm-3.457-3.61c-.398.598-.632 1.454-.586 2.133.012.715.364 1.524.88 2.04.175.164.374.14.503-.047.387-.598.621-1.454.563-2.133-.047-.668-.364-1.465-.809-2.016-.187-.21-.398-.187-.55.024Zm6.047-1.183c-.68.105-1.453.516-1.945.996s-.88 1.29-.961 1.969c-.023.234.105.375.34.363.715-.035 1.511-.41 2.004-.96.468-.493.855-1.278.96-1.981.024-.27-.117-.422-.398-.387Z"/>
+                        </svg>
+                        <div class="star-content">
+                            <svg class="star-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                            </svg>
+                            <span class="star-text">Freshly Released</span>
+                        </div>
+                        <svg class="right-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" aria-hidden="true">
+                            <path d="M11.867 24.571c-.703.047-1.511.387-2.027.868-.176.164-.164.363.023.492.575.433 1.43.656 2.145.562.68-.047 1.488-.41 2.027-.89.211-.188.176-.41-.07-.551-.574-.352-1.418-.54-2.098-.48Zm-2.46-3.96c-.153-.223-.364-.235-.54-.024-.468.54-.808 1.348-.855 2.027-.07.727.176 1.582.633 2.121.152.188.34.188.492.012.457-.504.785-1.324.82-2.039.035-.68-.187-1.523-.55-2.098Zm5.765.785c-.656.222-1.348.761-1.723 1.359-.129.21-.07.387.153.469.668.281 1.558.281 2.215.011.644-.234 1.335-.785 1.722-1.382.14-.235.07-.434-.187-.516-.657-.2-1.535-.176-2.18.059Zm-3.375-3.188c-.21-.2-.422-.164-.527.094-.317.633-.434 1.512-.305 2.18.129.726.586 1.488 1.148 1.898.188.140.387.105.48-.117.317-.598.411-1.477.27-2.18-.14-.668-.562-1.418-1.066-1.875Zm8.309-1.348c.046-.27-.094-.421-.375-.386-.68.082-1.454.457-1.957.937-.504.457-.915 1.219-1.032 1.934-.035.234.094.387.328.375.727-.024 1.536-.375 2.028-.89.504-.493.914-1.29 1.008-1.97Zm-6.727-1.007c-.258-.094-.434.023-.434.304-.046.692.2 1.524.598 2.121.375.61 1.113 1.114 1.817 1.278.222.035.386-.082.398-.305.035-.727-.223-1.559-.633-2.11a3.843 3.843 0 0 0-1.746-1.288Zm1.957-2.742c-.504-.446-1.312-.75-2.016-.81-.27-.01-.398.165-.363.423.152.68.61 1.441 1.149 1.898.515.469 1.359.785 2.086.762.21-.012.34-.176.304-.387a3.44 3.44 0 0 0-1.16-1.886Zm4.758-1.536c-.035-.28-.223-.386-.469-.28-.633.245-1.3.808-1.664 1.394-.375.609-.586 1.464-.504 2.132.024.235.2.352.422.282.68-.188 1.371-.739 1.723-1.371a3.69 3.69 0 0 0 .492-2.157Zm-5.39-2.402c-.634-.234-1.5-.246-2.169-.059-.258.082-.328.282-.199.493.352.597 1.043 1.16 1.734 1.418.657.27 1.547.27 2.215 0 .211-.094.27-.293.153-.480-.375-.61-1.067-1.138-1.735-1.372Zm3.925-3.07c-.117-.235-.34-.282-.539-.118-.48.47-.926 1.22-1.066 1.899-.153.691-.059 1.559.257 2.168.106.21.305.27.48.129.575-.422 1.032-1.172 1.161-1.887.14-.68.023-1.547-.293-2.191Zm-6.059-.305c-.68-.14-1.535-.035-2.156.246-.246.106-.304.316-.129.527.457.516 1.22.973 1.899 1.125.703.188 1.582.07 2.191-.293.2-.128.235-.328.094-.492a3.425 3.425 0 0 0-1.899-1.113Zm3.47-3.61c-.153-.21-.376-.234-.552-.023-.445.55-.773 1.348-.808 2.016-.07.68.164 1.535.562 2.133.13.187.328.21.504.046.516-.515.867-1.324.88-2.039.046-.68-.188-1.535-.587-2.132ZM9.991 1.006c-.28-.035-.422.117-.398.387.105.703.492 1.488.96 1.98.493.551 1.29.926 2.005.961.234.012.363-.129.34-.363-.082-.680-.47-1.488-.973-1.969-.48-.48-1.254-.89-1.934-.996Z"/>
+                        </svg>
+                    </a>
+                <div class="badge-row">
+                    <a class="joss-link pypi-link" href="https://pypi.org/project/long-toolkit/" target="_blank" aria-label="Available on PyPI">
+                        <p class="joss-top-text">Available on</p>
+                        <div class="joss-content">
+                            <svg class="joss-svg" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>PyPI</title><path d="M23.922 13.58v3.912L20.55 18.72l-.078.055.052.037 3.45-1.256.026-.036v-3.997l-.053-.036-.025.092zm-.301-7.962-3.04 1.107v3.912l3.339-1.215V5.509zm.299 7.839V9.544l-3.336 1.215v3.913zm-3.45 1.253V10.8l-3.3 1.2v3.913zm-3.436 5.286v-3.912l-3.313 1.206v3.912zm.136-3.939v3.868l3.314-1.206V14.85zm2.093 1.882c-.367.134-.663-.074-.663-.463s.296-.814.663-.947c.365-.133.662.075.662.464s-.297.814-.662.946m-6.038-8.624.365-.132-3.285-1.197-3.323 1.21.102.037 3.184 1.16zm7.282 1.349V6.751L17.17 7.965v3.913zm-3.449 1.254V8.005l-3.302 1.202v3.912zm-3.415-2.672-3.336 1.215v3.913l3.336-1.215zm-6.736 3.919 3.322 1.209v-3.913L6.907 9.252zm3.433-5.292 3.281 1.193V5.198l-3.28-1.193zm10.167-5.158L17.19 3.922v3.913l3.317-1.207zM16.95 3.903 13.724 2.73l-3.269 1.19 3.225 1.174zm-1.585.703-1.624.592v3.868l3.317-1.207V3.991zm-.391 2.778c-.367.134-.662-.074-.662-.464s.295-.813.662-.946c.366-.133.663.074.663.464s-.297.813-.663.946M10.229 18.41v-3.914l-3.322-1.209V17.2zm3.449-1.228v-3.913l-3.371 1.227v3.913zm.078-.028 3.3-1.2V12.04l-3.3 1.2zm-.078 4.063-3.371 1.227v-3.912h-.078v3.912l-3.322-1.209v-3.913l-.053-.058-.025-.06-3.336-1.21v-3.948l.034.013 3.287 1.196.015-.078-3.261-1.187 3.26-1.187v-.109L3.876 9.62l-.307-.112 3.26-1.188v.877l.079-.055V6.769l3.257 1.185.058-.061L7.084 6.75l-.102-.037 3.24-1.179v-.083L6.854 6.677v.018l-.025.018v1.523L3.44 9.47v.02l-.025.017v4.007l-3.39 1.233v.019L0 14.784v3.995l.025.037 3.4 1.237.008-.006.007.01 3.4 1.238.008-.006.006.01 3.4 1.237.014-.009.012.01 3.45-1.256.026-.037zM3.493 9.563l3.257 1.185-3.257 1.187V9.562zM3.4 19.96.078 18.752v-3.913l2.361.86.96.349zm.015-3.99-3.08-1.12-.182-.066 3.262-1.187zm3.399 5.231-3.321-1.209V16.08l3.321 1.209zM23.791 5.434l-3.21-1.17v2.338zm-3.404-2.791-3.24-1.18-3.27 1.19 3.247 1.182z"/></svg>
+                            <span class="joss-text">PyPI</span>
+                        </div>
+                    </a>
+
+                    <a class="joss-link" href="https://github.com/Long-Toolkit/homebrew-tap" target="_blank" aria-label="Available on Homebrew">
+                        <p class="joss-top-text">CLI on</p>
+                        <div class="joss-content">
+                            <svg class="joss-svg" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Homebrew</title><path d="M7.938 0a.214.214 0 0 0-.206.156c-.316 1.104.179 2.15.838 2.935q.23.27.476.501a2 2 0 0 0-.665.02c-1.184.233-2.193.985-2.74 2.532a3.9 3.9 0 0 0-.2 1.466 1.565 1.565 0 0 0-1.156 1.504 1.59 1.59 0 0 0 1.227 1.541l.026 12.046c0 .195.1.377.264.482l.008.005c.537.31 2.047.812 5.21.812 3.238 0 4.7-.678 5.181-1.04l.008-.007a.57.57 0 0 0 .206-.439c.002-.344.002-1.136.002-1.604a.143.143 0 0 1 .147-.144c.397.006.869.006 1.318.005a1.826 1.826 0 0 0 1.832-1.825v-5.804a1.826 1.826 0 0 0-1.825-1.826H16.56a.14.14 0 0 1-.143-.144V10.6h.007v-.001a1.57 1.57 0 0 0 1.356-1.556c0-.816-.627-1.489-1.424-1.563-.025-1.438-.437-2.126-.736-2.58l-.005-.007c-.364-.51-1.193-1.282-2.275-1.316-.503-.016-.842.124-1.125.254-.217.1-.42.177-.67.22.002-1.286.945-1.981.945-1.981a.214.214 0 0 0 .05-.298s-.087-.122-.21-.26c-.121-.136-.269-.294-.47-.378a.2.2 0 0 0-.079-.017.21.21 0 0 0-.145.055 4.3 4.3 0 0 0-.875 1.101 3 3 0 0 0-.133.273 3.5 3.5 0 0 0-.381-.846C9.794.978 9.063.436 8.017.016A.2.2 0 0 0 7.939 0zm.156.524c.85.378 1.43.83 1.79 1.403.274.438.426.962.484 1.584a3 3 0 0 0-.012.462l-.168-.052a5.5 5.5 0 0 1-1.29-1.106c-.551-.657-.935-1.46-.804-2.291M11.8 1.618c.07.054.141.101.212.18.034.039.032.04.058.073-.332.308-1.07 1.144-.952 2.453a.214.214 0 0 0 .222.195c.469-.017.782-.172 1.056-.299.273-.126.508-.228.931-.214.875.027 1.639.715 1.939 1.134.295.449.65 1 .663 2.36a1.7 1.7 0 0 0-.41.142 1.94 1.94 0 0 0-1.77-1.16 1.94 1.94 0 0 0-1.87 1.448 1.78 1.78 0 0 0-1.356-.64c-.484 0-.91.205-1.233.517a1.87 1.87 0 0 0-1.85-1.625c-.649 0-1.218.335-1.552.84a3 3 0 0 1 .157-.735c.51-1.437 1.355-2.045 2.42-2.254.367-.073.664-.011.99.095s.671.262 1.094.342a.214.214 0 0 0 .252-.245c-.112-.67.073-1.266.336-1.744a3.7 3.7 0 0 1 .663-.863M7.44 6.611a1.442 1.442 0 0 1 1.363 1.925.214.214 0 0 0 .168.283h.005a.214.214 0 0 0 .238-.146 1.373 1.373 0 0 1 2.613-.01.214.214 0 0 0 .417-.09 1.51 1.51 0 0 1 1.504-1.664c.678 0 1.249.445 1.442 1.056a.214.214 0 0 0 .259.143l.15-.04a.2.2 0 0 0 .051-.02 1.14 1.14 0 0 1 1.702.995 1.14 1.14 0 0 1-.985 1.131h-.001a2.2 2.2 0 0 0-.485.126 11 11 0 0 1-1.176.365.21.21 0 0 0-.162.186 1.3 1.3 0 0 1-.146.478 2.07 2.07 0 0 0-.239 1.111l.001.151a.44.44 0 0 1-.16.36.67.67 0 0 1-.43.14.586.586 0 0 1-.588-.59.8.8 0 0 0-.38-.681l-.002-.002c-.24-.145-.43-.37-.532-.636a.21.21 0 0 0-.207-.138 19.5 19.5 0 0 1-5.37-.6l-.003-.002a9 9 0 0 0-.838-.194h.003a1.16 1.16 0 0 1-.937-1.134c0-.619.488-1.118 1.101-1.14a.214.214 0 0 0 .204-.176 1.44 1.44 0 0 1 1.42-1.187m8.549 4.106v.455c0 .314.259.573.572.573h1.329a1.397 1.397 0 0 1 1.397 1.397v5.804a1.396 1.396 0 0 1-1.402 1.396h-.002c-.448.002-.918 0-1.31-.005a.573.573 0 0 0-.584.573c0 .468 0 1.262-.002 1.603v.001q-.002.065-.05.107c-.346.26-1.75.95-4.915.95-3.107 0-4.587-.52-4.99-.752a.14.14 0 0 1-.065-.118l-.025-11.955q.217.05.431.11h.003c.115.031.246.064.383.097v10.37c0 .129.069.247.18.31.453.217 1.767.732 4.071.732 2.32 0 3.595-.626 4.022-.884a.36.36 0 0 0 .164-.3l.001-10.21q.4-.111.792-.254m-7.99.894a.493.493 0 0 1 .494.493v8.578a.493.493 0 0 1-.493.493.493.493 0 0 1-.494-.493v-8.578A.493.493 0 0 1 8 11.611zm8.652 1.14a.663.663 0 0 0-.662.662v5.208a.663.663 0 0 0 .662.662h1.14a.663.663 0 0 0 .662-.662v-5.209a.663.663 0 0 0-.662-.662zm0 .428h1.14a.233.233 0 0 1 .233.233v5.21a.233.233 0 0 1-.233.232h-1.14a.233.233 0 0 1-.233-.233v-5.209a.233.233 0 0 1 .233-.233"/></svg>
+                            <span class="joss-text">Homebrew</span>
+                        </div>
+                    </a>
+                    </div>
+            </div>
+            <div class="longtk-hero__window">
+                <div class="longtk-window" aria-label="Animated header of the Long-Toolkit command-line interface">
+                    <div class="longtk-window__bar">
+                        <span class="longtk-window__dot"></span>
+                        <span class="longtk-window__dot"></span>
+                        <span class="longtk-window__dot"></span>
+                        <span class="longtk-window__title">~ long-toolkit</span>
+                    </div>
+                    <div class="longtk-window__body" data-ascii-header="assets/animations/long_toolkit_header.json"></div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="longtk-section longtk-section--quote">
+    <figure class="longtk-quote">
+        <blockquote class="longtk-quote__text">
+            <p>Longitudinal studies invest heavily in collecting and curating their data, yet machine learning is either left aside or applied as if every wave were an unrelated feature. We built Long-Toolkit so that experts of longitudinal studies can get their data ready, and measure fairly whether conventional or longitudinal machine learning is worth it.</p>
+        </blockquote>
+        <figcaption class="longtk-quote__author">
+            <a href="https://simonprovost.xyz/">Simon Provost</a> (McGill University) &amp; <a href="https://edwebprofiles.ed.ac.uk/profile/dr-alex-kwong">Dr Alex Kwong</a>, <a href="https://life-epi-psych.github.io/">LEAP lab</a> (University of Edinburgh)
+        </figcaption>
+    </figure>
+</div>
+
+<div class="longtk-scroller" data-longtk-scroller>
+<div class="longtk-sticky">
+<div class="longtk-section longtk-section--steps">
+    <h2 class="longtk-heading">Four toolkits, one workflow</h2>
+    <a class="longtk-subheading" data-longtk-issue-link href="https://github.com/Long-Toolkit/long-toolkit/issues/new?template=feature_data_preparation.yml" target="_blank" rel="noopener">We need more tools and primitives: come help us decide which ones</a>
+    <div class="longtk-steps" data-longtk-steps>
+        <ol class="longtk-steps__list">
+            <li class="longtk-step is-active" data-longtk-step="0">
+                <button class="longtk-step__head" type="button" aria-pressed="true">
+                    <span class="longtk-step__number">01</span>
+                    <span class="longtk-step__title">Data Preparation</span>
+                </button>
+                <div class="longtk-step__more"><div>
+                    <p class="longtk-step__text">Generation of synthetic longitudinal cohorts with known trends, shocks or missingness, or conversion of your own study files between CSV, Parquet and Stata.</p>
+                    <a class="longtk-step__link" href="toolkits/data-preparation/">Open the toolkit</a>
+                </div></div>
+            </li>
+            <li class="longtk-step" data-longtk-step="1">
+                <button class="longtk-step__head" type="button" aria-pressed="false">
+                    <span class="longtk-step__number">02</span>
+                    <span class="longtk-step__title">Data Preprocessing</span>
+                </button>
+                <div class="longtk-step__more"><div>
+                    <p class="longtk-step__text">Cleaning, imputation, category harmonisation, and long to wide reshaping of repeated measures.</p>
+                    <a class="longtk-step__link" href="toolkits/data-preprocessing/">Open the toolkit</a>
+                </div></div>
+            </li>
+            <li class="longtk-step" data-longtk-step="2">
+                <button class="longtk-step__head" type="button" aria-pressed="false">
+                    <span class="longtk-step__number">03</span>
+                    <span class="longtk-step__title">Benchmarking<br>&amp; Modelling</span>
+                </button>
+                <div class="longtk-step__more"><div>
+                    <p class="longtk-step__text">Standard and longitudinal estimators ranked all against all, under one shared protocol; or train a single estimator out of conventional or longitudinal-data-aware ones.</p>
+                    <a class="longtk-step__link" href="toolkits/benchmarking-and-modelling/">Open the toolkit</a>
+                </div></div>
+            </li>
+            <li class="longtk-step" data-longtk-step="3">
+                <button class="longtk-step__head" type="button" aria-pressed="false">
+                    <span class="longtk-step__number">04</span>
+                    <span class="longtk-step__title">Explainability</span>
+                </button>
+                <div class="longtk-step__more"><div>
+                    <p class="longtk-step__text">The predictions of a saved model, e.g., the best estimator of the benchmark, explained with SHAP values.</p>
+                    <a class="longtk-step__link" href="toolkits/explainability/">Open the toolkit</a>
+                </div></div>
+            </li>
+        </ol>
+        <div class="longtk-steps__side">
+        <div class="longtk-window">
+            <div class="longtk-window__bar">
+                <span class="longtk-window__dot"></span>
+                <span class="longtk-window__dot"></span>
+                <span class="longtk-window__dot"></span>
+                <span class="longtk-window__title" data-longtk-filename>prepare.py</span>
+            </div>
+            <div class="longtk-window__body longtk-window__body--stack">
+                <pre class="longtk-code is-active" data-longtk-code="0" data-longtk-issue="https://github.com/Long-Toolkit/long-toolkit/issues/new?template=feature_data_preparation.yml" data-longtk-file="prepare.py"><span class="k">from</span> long_toolkit.data_preparation <span class="k">import</span> (
+    StataToCsv, TrendPatterns,
+)
+
+<span class="c"># (1) Generate a synthetic cohort, in long format</span>
+TrendPatterns(
+    n_samples=<span class="s">300</span>, n_waves=<span class="s">4</span>, random_state=<span class="s">7</span>
+).prepare().to_csv(<span class="s">"data/cohort_long.csv"</span>, index=<span class="s">False</span>)
+
+<span class="c"># (2) Or convert your own study from Stata to CSV</span>
+StataToCsv().prepare(
+    input_path=<span class="s">"data/study.dta"</span>,
+    output_path=<span class="s">"data/study.csv"</span>,
+)</pre>
+                <pre class="longtk-code" data-longtk-code="1" data-longtk-issue="https://github.com/Long-Toolkit/long-toolkit/issues/new?template=feature_data_preprocessing.yml" data-longtk-file="preprocess.py"><span class="k">from</span> long_toolkit.data_preprocessing <span class="k">import</span> PivotLongToWide
+
+<span class="c"># One row per participant: mood_score_w1 to _w4</span>
+PivotLongToWide().fit_preprocess(
+    input_path=<span class="s">"data/cohort_long.csv"</span>,
+    output_path=<span class="s">"data/cohort_wide.csv"</span>,
+    id_cols=[<span class="s">"subject_id"</span>], time_col=<span class="s">"wave"</span>,
+    longitudinal_columns=[<span class="s">"mood_score"</span>],
+    time_label=<span class="s">"w"</span>, separator=<span class="s">"_"</span>,
+)
+<span class="c"># Then add the outcome to predict, e.g., outcome_class</span></pre>
+                <pre class="longtk-code" data-longtk-code="2" data-longtk-issue="https://github.com/Long-Toolkit/long-toolkit/issues/new?template=feature_machine_learning.yml" data-longtk-file="benchmark.py"><span class="k">from</span> long_toolkit.machine_learning <span class="k">import</span> (
+    BenchStandardAndLongitudinalML,
+)
+
+<span class="c"># Every estimator ranked against every other one</span>
+bench = BenchStandardAndLongitudinalML().fit_predict(
+    technique=<span class="s">"run_benchmark"</span>,
+    input_path=<span class="s">"data/cohort_wide.csv"</span>,
+    target_column=<span class="s">"outcome_class"</span>,
+    feature_columns=<span class="s">"mood_score_w1,mood_score_w2,mood_score_w3"</span>,
+    feature_groups_mode=<span class="s">"suffix"</span>,
+    feature_groups_suffix=<span class="s">"_w"</span>,
+    metric_keys=<span class="s">"f1_macro,auroc"</span>, n_splits=<span class="s">5</span>,
+)</pre>
+                <pre class="longtk-code" data-longtk-code="3" data-longtk-issue="https://github.com/Long-Toolkit/long-toolkit/issues/new?template=feature_explainability.yml" data-longtk-file="explain.py"><span class="k">from</span> long_toolkit.explainability <span class="k">import</span> SHAPAnalysis
+
+<span class="c"># The estimator ranked first by the benchmark</span>
+best = bench[<span class="s">"runs"</span>][<span class="s">0</span>][<span class="s">"ranked_estimators"</span>][<span class="s">0</span>]
+
+SHAPAnalysis().fit_explain(
+    model_path=best[<span class="s">"model_artifact"</span>],
+    input_path=<span class="s">"data/cohort_wide.csv"</span>,
+    target_column=<span class="s">"outcome_class"</span>,
+    feature_columns=<span class="s">"mood_score_w1,mood_score_w2,mood_score_w3"</span>,
+)
+<span class="c"># Which waves drive its predictions</span></pre>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
+<div class="longtk-section">
+    <h2 class="longtk-heading">In code or in the terminal</h2>
+    <p class="longtk-lead">Every tool is available in two modes, which run the same Python code and write the same files: in code, through the application programming interface (API), or without code, through the command-line interface (CLI).</p>
+    <div class="longtk-modes">
+        <div class="longtk-mode">
+            <span class="longtk-mode__label">Python · API</span>
+            <h3 class="longtk-mode__title">In code</h3>
+            <p class="longtk-mode__text">Import a tool, pass its parameters as keyword arguments, and chain tools in a script or a Jupyter notebook. Each tool reads and writes files on disk, so that any step can be rerun on its own.</p>
+            <div class="longtk-window">
+                <div class="longtk-window__bar">
+                    <span class="longtk-window__dot"></span>
+                    <span class="longtk-window__dot"></span>
+                    <span class="longtk-window__dot"></span>
+                    <span class="longtk-window__title">impute.py</span>
+                </div>
+                <div class="longtk-window__body">
+                    <pre class="longtk-code is-active"><span class="k">from</span> long_toolkit.data_preprocessing <span class="k">import</span> (
+    MissingImputation,
+)
+
+MissingImputation().fit_preprocess(
+    technique=<span class="s">"median_imputation"</span>,
+    input_path=<span class="s">"data/cohort_clean.csv"</span>,
+    output_path=<span class="s">"data/cohort_imputed.csv"</span>,
+)</pre>
+                </div>
+            </div>
+            <a class="longtk-mode__link" href="tutorials/api/">Open the API tutorial</a>
+        </div>
+        <div class="longtk-mode">
+            <span class="longtk-mode__label">Terminal · CLI</span>
+            <h3 class="longtk-mode__title">Without code</h3>
+            <p class="longtk-mode__text">Launch <code>long-toolkit</code>, open a stage, and fill in the form of any tool, with its defaults and hints. The command palette (<code>:</code>) finds any tool by name.</p>
+            <div class="longtk-window">
+                <div class="longtk-window__bar">
+                    <span class="longtk-window__dot"></span>
+                    <span class="longtk-window__dot"></span>
+                    <span class="longtk-window__dot"></span>
+                    <span class="longtk-window__title">~ long-toolkit</span>
+                </div>
+                <div class="longtk-window__body">
+                    <pre class="longtk-code longtk-code--tui is-active"><span class="k">Machine Learning</span>
+<span class="c">Select one to configure and run.</span>
+
+<span class="k">│</span> Standard Machine Learning
+  Longitudinal Machine Learning
+  Benchmark Standard ML
+  Benchmark Longitudinal ML
+
+<span class="c">Command Palette</span>
+<span class="k">⌁</span> shap analysis<span class="longtk-caret"></span></pre>
+                </div>
+            </div>
+            <a class="longtk-mode__link" href="tutorials/cli/">Open the CLI tutorial</a>
+        </div>
+    </div>
+</div>
+
+<div class="longtk-section">
+    <div class="longtk-panel">
+        <svg class="longtk-panel__border" fill="none" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="1" width="calc(100% - 2px)" height="calc(100% - 2px)" rx="22" ry="22" stroke-width="2" stroke-dasharray="0.5 8" stroke-linecap="round" vector-effect="non-scaling-stroke"></rect></svg>
+        <span class="longtk-panel__badge longtk-panel__badge--top"><svg class="longtk-panel__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></span>
+        <h2 class="longtk-panel__heading">50+ Estimators</h2>
+        <div class="longtk-marquee" aria-hidden="true">
+            <div class="longtk-marquee__track"><span class="longtk-chip longtk-chip--baseline">logistic_regression<span class="longtk-chip__tag">baseline</span></span><span class="longtk-chip">random_forest<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">aggrfunc_mean__logistic_regression<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">gradient_boosting<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">merwav_time_plus__lexico_random_forest<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">svm<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">sepwav_stacking_lr__extra_trees<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">knn<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">merwav_time_plus__nested_trees<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">extra_trees<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">sepwav_voting__random_forest<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">decision_tree<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">merwav_time_minus__gradient_boosting<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">merwav_time_plus__lexico_deep_forest<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip longtk-chip--baseline">logistic_regression<span class="longtk-chip__tag">baseline</span></span><span class="longtk-chip">random_forest<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">aggrfunc_mean__logistic_regression<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">gradient_boosting<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">merwav_time_plus__lexico_random_forest<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">svm<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">sepwav_stacking_lr__extra_trees<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">knn<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">merwav_time_plus__nested_trees<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">extra_trees<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">sepwav_voting__random_forest<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">decision_tree<span class="longtk-chip__tag">standard</span></span><span class="longtk-chip">merwav_time_minus__gradient_boosting<span class="longtk-chip__tag">longitudinal</span></span><span class="longtk-chip">merwav_time_plus__lexico_deep_forest<span class="longtk-chip__tag">longitudinal</span></span></div>
+        </div>
+        <h2 class="longtk-panel__heading">one shared protocol</h2>
+        <p class="longtk-panel__text">Several non-longitudinal conventional machine learning and longitudinal-data-aware primitives are trained on the same splits, with the same metrics and seed, and ranked all against all: every estimator is compared with every other one, not only with a single baseline such as logistic regression.</p>
+        <a class="longtk-pill" href="getting-started/">Get Started →</a>
+        <span class="longtk-panel__badge longtk-panel__badge--bottom">Long-Toolkit</span>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const scroller = document.querySelector("[data-longtk-scroller]");
+        if (!scroller) return;
+        const steps = Array.from(scroller.querySelectorAll("[data-longtk-step]"));
+        const codes = Array.from(scroller.querySelectorAll("[data-longtk-code]"));
+        const filename = scroller.querySelector("[data-longtk-filename]");
+        const issueLink = scroller.querySelector("[data-longtk-issue-link]");
+        const scrollDriven = window.matchMedia("(min-width: 861px) and (min-height: 560px)");
+        let current = -1;
+
+        const activate = (index) => {
+            if (index === current) return;
+            current = index;
+            steps.forEach((step, i) => {
+                step.classList.toggle("is-active", i === index);
+                step.querySelector(".longtk-step__head").setAttribute("aria-pressed", i === index ? "true" : "false");
+            });
+            codes.forEach((code, i) => code.classList.toggle("is-active", i === index));
+            if (filename) filename.textContent = codes[index].dataset.longtkFile;
+            if (issueLink) issueLink.href = codes[index].dataset.longtkIssue;
+        };
+
+        const range = () => scroller.offsetHeight - scroller.querySelector(".longtk-sticky").offsetHeight;
+
+        const onScroll = () => {
+            if (!scrollDriven.matches) return;
+            const span = range();
+            if (span <= 0) return;
+            const progress = Math.min(Math.max(-scroller.getBoundingClientRect().top / span, 0), 0.9999);
+            const position = progress * steps.length;
+            const index = Math.floor(position);
+            steps.forEach((step, i) => {
+                const fill = i < index ? 1 : i > index ? 0 : position - index;
+                step.style.setProperty("--longtk-progress", fill.toFixed(3));
+            });
+            activate(index);
+        };
+
+        steps.forEach((step, i) => step.querySelector(".longtk-step__head").addEventListener("click", () => {
+            if (scrollDriven.matches && range() > 0) {
+                const top = scroller.getBoundingClientRect().top + window.scrollY;
+                window.scrollTo({ top: top + ((i + 0.08) / steps.length) * range(), behavior: "smooth" });
+            } else {
+                activate(i);
+            }
+        }));
+
+        const sync = () => {
+            scroller.classList.toggle("is-scroll-driven", scrollDriven.matches);
+            if (!scrollDriven.matches) steps.forEach((step) => step.style.removeProperty("--longtk-progress"));
+            onScroll();
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+        scrollDriven.addEventListener("change", sync);
+        activate(0);
+        sync();
+    })();
+</script>
+
+
+<div class="social-icons-stack">
+    <div class="social-icons-container">
+        <a class="social-icon-link" href="https://github.com/Long-Toolkit" aria-label="GitHub">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="social-icon-bottom">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            </svg>
+        </a>
+        <div class="social-icon-group">
+            <button class="social-icon-link" type="button" aria-label="Google Scholar" aria-haspopup="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="social-icon-bottom">
+                <path d="M12 24a7 7 0 1 1 0-14 7 7 0 0 1 0 14zm0-24L0 9.5l4.838 3.94A8 8 0 0 1 12 9a8 8 0 0 1 7.162 4.44L24 9.5z"/>
+            </svg>
+            </button>
+            <div class="social-menu" role="menu" aria-label="Google Scholar">
+                <a href="https://scholar.google.com/citations?user=Lv_LddYAAAAJ&amp;hl=en&amp;oi=ao" target="_blank" rel="noopener">Simon Provost</a>
+                <a href="https://scholar.google.com/citations?user=F-sGJEIAAAAJ&amp;hl=en" target="_blank" rel="noopener">Alex Kwong</a>
+            </div>
+        </div>
+        <div class="social-icon-group">
+            <button class="social-icon-link" type="button" aria-label="LinkedIn" aria-haspopup="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="social-icon-bottom">
+                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+            </svg>
+            </button>
+            <div class="social-menu" role="menu" aria-label="LinkedIn">
+                <a href="https://www.linkedin.com/in/simonprovostdev/" target="_blank" rel="noopener">Simon Provost</a>
+                <a href="https://www.linkedin.com/in/alex-kwong-466445357/" target="_blank" rel="noopener">Alex Kwong</a>
+            </div>
+        </div>
+    </div>
+    <p class="social-scroll-hint">psst... scroll a bit further!</p>
+</div>
+
+<footer class="footer" role="contentinfo">
+    <div class="footer-beyond-overlay" aria-hidden="true" data-footer-beyond style="transform: scaleY(0);">
+        <svg class="footer-beyond-svg" viewBox="0 0 1271 599" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g filter="url(#filter0_f_3283_101175)">
+                <rect
+                        x="1287"
+                        y="614"
+                        width="174"
+                        height="323"
+                        rx="20"
+                        ry="20"
+                        transform="rotate(180 1287 614)"
+                        fill="url(#paint0_linear_3283_101175)"
+                ></rect>
+            </g>
+            <g filter="url(#filter1_f_3283_101175)">
+                <rect
+                        x="1146"
+                        y="614"
+                        width="174"
+                        height="404"
+                        rx="20"
+                        ry="20"
+                        transform="rotate(180 1146 614)"
+                        fill="url(#paint1_linear_3283_101175)"
+                ></rect>
+            </g>
+            <g filter="url(#filter2_f_3283_101175)">
+                <rect
+                        x="1005"
+                        y="614"
+                        width="174"
+                        height="478"
+                        rx="20"
+                        ry="20"
+                        transform="rotate(180 1005 614)"
+                        fill="url(#paint2_linear_3283_101175)"
+                ></rect>
+            </g>
+            <g filter="url(#filter3_f_3283_101175)">
+                <rect
+                        width="174"
+                        height="323"
+                        rx="20"
+                        ry="20"
+                        transform="matrix(1 0 -5.78527e-07 -1 -16 614)"
+                        fill="url(#paint3_linear_3283_101175)"
+                ></rect>
+            </g>
+            <g filter="url(#filter4_f_3283_101175)">
+                <rect
+                        width="174"
+                        height="404"
+                        rx="20"
+                        ry="20"
+                        transform="matrix(1 0 -6.17385e-07 -1 125 614)"
+                        fill="url(#paint4_linear_3283_101175)"
+                ></rect>
+            </g>
+            <g filter="url(#filter5_f_3283_101175)">
+                <rect
+                        width="174"
+                        height="478"
+                        rx="20"
+                        ry="20"
+                        transform="matrix(1 0 -6.17385e-07 -1 266 614)"
+                        fill="url(#paint5_linear_3283_101175)"
+                ></rect>
+            </g>
+            <g filter="url(#filter6_f_3283_101175)">
+                <rect
+                        width="175"
+                        height="530"
+                        rx="20"
+                        ry="20"
+                        transform="matrix(1 0 -6.17385e-07 -1 407 614)"
+                        fill="url(#paint6_linear_3283_101175)"
+                ></rect>
+            </g>
+            <g filter="url(#filter7_f_3283_101175)">
+                <rect
+                        x="864"
+                        y="614"
+                        width="175"
+                        height="530"
+                        rx="20"
+                        ry="20"
+                        transform="rotate(180 864 614)"
+                        fill="url(#paint7_linear_3283_101175)"
+                ></rect>
+            </g>
+            <g filter="url(#filter8_f_3283_101175)">
+                <rect
+                        width="43"
+                        height="584"
+                        rx="20"
+                        ry="20"
+                        transform="matrix(1 0 -6.17385e-07 -1 549 614)"
+                        fill="url(#paint8_linear_3283_101175)"
+                ></rect>
+                <rect
+                        width="43"
+                        height="584"
+                        rx="20"
+                        ry="20"
+                        transform="matrix(1 0 -6.17385e-07 -1 592 614)"
+                        fill="url(#paint8_linear_3283_101175)"
+                ></rect>
+                <rect
+                        width="43"
+                        height="584"
+                        rx="20"
+                        ry="20"
+                        transform="matrix(1 0 -6.17385e-07 -1 635 614)"
+                        fill="url(#paint8_linear_3283_101175)"
+                ></rect>
+                <rect
+                        width="43"
+                        height="584"
+                        rx="20"
+                        ry="20"
+                        transform="matrix(1 0 -6.17385e-07 -1 678 614)"
+                        fill="url(#paint8_linear_3283_101175)"
+                ></rect>
+            </g>
+            <defs>
+                <filter
+                        id="filter0_f_3283_101175"
+                        x="1083"
+                        y="261"
+                        width="234"
+                        height="383"
+                        filterUnits="userSpaceOnUse"
+                        color-interpolation-filters="sRGB"
+                >
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+                    <feBlend
+                            mode="normal"
+                            in="SourceGraphic"
+                            in2="BackgroundImageFix"
+                            result="shape"
+                    ></feBlend>
+                    <feGaussianBlur
+                            stdDeviation="24"
+                            result="effect1_foregroundBlur_3283_101175"
+                    ></feGaussianBlur>
+                </filter>
+                <filter
+                        id="filter1_f_3283_101175"
+                        x="942"
+                        y="180"
+                        width="234"
+                        height="464"
+                        filterUnits="userSpaceOnUse"
+                        color-interpolation-filters="sRGB"
+                >
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+                    <feBlend
+                            mode="normal"
+                            in="SourceGraphic"
+                            in2="BackgroundImageFix"
+                            result="shape"
+                    ></feBlend>
+                    <feGaussianBlur
+                            stdDeviation="24"
+                            result="effect1_foregroundBlur_3283_101175"
+                    ></feGaussianBlur>
+                </filter>
+                <filter
+                        id="filter2_f_3283_101175"
+                        x="801"
+                        y="106"
+                        width="234"
+                        height="538"
+                        filterUnits="userSpaceOnUse"
+                        color-interpolation-filters="sRGB"
+                >
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+                    <feBlend
+                            mode="normal"
+                            in="SourceGraphic"
+                            in2="BackgroundImageFix"
+                            result="shape"
+                    ></feBlend>
+                    <feGaussianBlur
+                            stdDeviation="24"
+                            result="effect1_foregroundBlur_3283_101175"
+                    ></feGaussianBlur>
+                </filter>
+                <filter
+                        id="filter3_f_3283_101175"
+                        x="-46"
+                        y="261"
+                        width="234"
+                        height="383"
+                        filterUnits="userSpaceOnUse"
+                        color-interpolation-filters="sRGB"
+                >
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+                    <feBlend
+                            mode="normal"
+                            in="SourceGraphic"
+                            in2="BackgroundImageFix"
+                            result="shape"
+                    ></feBlend>
+                    <feGaussianBlur
+                            stdDeviation="24"
+                            result="effect1_foregroundBlur_3283_101175"
+                    ></feGaussianBlur>
+                </filter>
+                <filter
+                        id="filter4_f_3283_101175"
+                        x="95"
+                        y="180"
+                        width="234"
+                        height="464"
+                        filterUnits="userSpaceOnUse"
+                        color-interpolation-filters="sRGB"
+                >
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+                    <feBlend
+                            mode="normal"
+                            in="SourceGraphic"
+                            in2="BackgroundImageFix"
+                            result="shape"
+                    ></feBlend>
+                    <feGaussianBlur
+                            stdDeviation="24"
+                            result="effect1_foregroundBlur_3283_101175"
+                    ></feGaussianBlur>
+                </filter>
+                <filter
+                        id="filter5_f_3283_101175"
+                        x="236"
+                        y="106"
+                        width="234"
+                        height="538"
+                        filterUnits="userSpaceOnUse"
+                        color-interpolation-filters="sRGB"
+                >
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+                    <feBlend
+                            mode="normal"
+                            in="SourceGraphic"
+                            in2="BackgroundImageFix"
+                            result="shape"
+                    ></feBlend>
+                    <feGaussianBlur
+                            stdDeviation="24"
+                            result="effect1_foregroundBlur_3283_101175"
+                    ></feGaussianBlur>
+                </filter>
+                <filter
+                        id="filter6_f_3283_101175"
+                        x="377"
+                        y="54"
+                        width="235"
+                        height="590"
+                        filterUnits="userSpaceOnUse"
+                        color-interpolation-filters="sRGB"
+                >
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+                    <feBlend
+                            mode="normal"
+                            in="SourceGraphic"
+                            in2="BackgroundImageFix"
+                            result="shape"
+                    ></feBlend>
+                    <feGaussianBlur
+                            stdDeviation="24"
+                            result="effect1_foregroundBlur_3283_101175"
+                    ></feGaussianBlur>
+                </filter>
+                <filter
+                        id="filter7_f_3283_101175"
+                        x="659"
+                        y="54"
+                        width="235"
+                        height="590"
+                        filterUnits="userSpaceOnUse"
+                        color-interpolation-filters="sRGB"
+                >
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+                    <feBlend
+                            mode="normal"
+                            in="SourceGraphic"
+                            in2="BackgroundImageFix"
+                            result="shape"
+                    ></feBlend>
+                    <feGaussianBlur
+                            stdDeviation="24"
+                            result="effect1_foregroundBlur_3283_101175"
+                    ></feGaussianBlur>
+                </filter>
+                <filter
+                        id="filter8_f_3283_101175"
+                        x="519"
+                        y="0"
+                        width="233"
+                        height="644"
+                        filterUnits="userSpaceOnUse"
+                        color-interpolation-filters="sRGB"
+                >
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+                    <feBlend
+                            mode="normal"
+                            in="SourceGraphic"
+                            in2="BackgroundImageFix"
+                            result="shape"
+                    ></feBlend>
+                    <feGaussianBlur
+                            stdDeviation="24"
+                            result="effect1_foregroundBlur_3283_101175"
+                    ></feGaussianBlur>
+                </filter>
+                <linearGradient
+                        id="paint0_linear_3283_101175"
+                        x1="1374"
+                        y1="614"
+                        x2="1374"
+                        y2="937"
+                        gradientUnits="userSpaceOnUse"
+                >
+                    <stop stop-color="#2b0050"></stop>
+                    <stop offset="0.10" stop-color="#2b0050"></stop>
+                    <stop offset="0.18" stop-color="#2b0050"></stop>
+                    <stop offset="0.26" stop-color="#8a00ff"></stop>
+                    <stop offset="0.34" stop-color="#8a00ff"></stop>
+                    <stop offset="0.42" stop-color="#7b5cff"></stop>
+                    <stop offset="0.50" stop-color="#c259ff"></stop>
+                    <stop offset="0.58" stop-color="#ff58e9"></stop>
+                    <stop offset="0.66" stop-color="#ff68c5"></stop>
+                    <stop offset="0.78" stop-color="#dea2c2"></stop>
+                    <stop offset="0.88" stop-color="#dea2c2"></stop>
+                    <stop offset="0.96" stop-color="#dea2c2"></stop>
+                    <stop offset="1" stop-color="#dea2c2" stop-opacity="0"></stop>
+                </linearGradient>
+                <linearGradient
+                        id="paint1_linear_3283_101175"
+                        x1="1233"
+                        y1="614"
+                        x2="1233"
+                        y2="1018"
+                        gradientUnits="userSpaceOnUse"
+                >
+                    <stop stop-color="#2b0050"></stop>
+                    <stop offset="0.10" stop-color="#2b0050"></stop>
+                    <stop offset="0.18" stop-color="#2b0050"></stop>
+                    <stop offset="0.26" stop-color="#8a00ff"></stop>
+                    <stop offset="0.34" stop-color="#8a00ff"></stop>
+                    <stop offset="0.42" stop-color="#7b5cff"></stop>
+                    <stop offset="0.50" stop-color="#c259ff"></stop>
+                    <stop offset="0.58" stop-color="#ff58e9"></stop>
+                    <stop offset="0.66" stop-color="#ff68c5"></stop>
+                    <stop offset="0.78" stop-color="#dea2c2"></stop>
+                    <stop offset="0.88" stop-color="#dea2c2"></stop>
+                    <stop offset="0.96" stop-color="#dea2c2"></stop>
+                    <stop offset="1" stop-color="#dea2c2" stop-opacity="0"></stop>
+                </linearGradient>
+                <linearGradient
+                        id="paint2_linear_3283_101175"
+                        x1="1092"
+                        y1="614"
+                        x2="1092"
+                        y2="1092"
+                        gradientUnits="userSpaceOnUse"
+                >
+                    <stop stop-color="#2b0050"></stop>
+                    <stop offset="0.10" stop-color="#2b0050"></stop>
+                    <stop offset="0.18" stop-color="#2b0050"></stop>
+                    <stop offset="0.26" stop-color="#8a00ff"></stop>
+                    <stop offset="0.34" stop-color="#8a00ff"></stop>
+                    <stop offset="0.42" stop-color="#7b5cff"></stop>
+                    <stop offset="0.50" stop-color="#c259ff"></stop>
+                    <stop offset="0.58" stop-color="#ff58e9"></stop>
+                    <stop offset="0.66" stop-color="#ff68c5"></stop>
+                    <stop offset="0.78" stop-color="#dea2c2"></stop>
+                    <stop offset="0.88" stop-color="#dea2c2"></stop>
+                    <stop offset="0.96" stop-color="#dea2c2"></stop>
+                    <stop offset="1" stop-color="#dea2c2" stop-opacity="0"></stop>
+                </linearGradient>
+                <linearGradient
+                        id="paint3_linear_3283_101175"
+                        x1="87.0001"
+                        y1="0"
+                        x2="87.0001"
+                        y2="323"
+                        gradientUnits="userSpaceOnUse"
+                >
+                    <stop stop-color="#2b0050"></stop>
+                    <stop offset="0.10" stop-color="#2b0050"></stop>
+                    <stop offset="0.18" stop-color="#2b0050"></stop>
+                    <stop offset="0.26" stop-color="#8a00ff"></stop>
+                    <stop offset="0.34" stop-color="#8a00ff"></stop>
+                    <stop offset="0.42" stop-color="#7b5cff"></stop>
+                    <stop offset="0.50" stop-color="#c259ff"></stop>
+                    <stop offset="0.58" stop-color="#ff58e9"></stop>
+                    <stop offset="0.66" stop-color="#ff68c5"></stop>
+                    <stop offset="0.78" stop-color="#dea2c2"></stop>
+                    <stop offset="0.88" stop-color="#dea2c2"></stop>
+                    <stop offset="0.96" stop-color="#dea2c2"></stop>
+                    <stop offset="1" stop-color="#dea2c2" stop-opacity="0"></stop>
+                </linearGradient>
+                <linearGradient
+                        id="paint4_linear_3283_101175"
+                        x1="87.0001"
+                        y1="0"
+                        x2="87.0001"
+                        y2="404"
+                        gradientUnits="userSpaceOnUse"
+                >
+                    <stop stop-color="#2b0050"></stop>
+                    <stop offset="0.10" stop-color="#2b0050"></stop>
+                    <stop offset="0.18" stop-color="#2b0050"></stop>
+                    <stop offset="0.26" stop-color="#8a00ff"></stop>
+                    <stop offset="0.34" stop-color="#8a00ff"></stop>
+                    <stop offset="0.42" stop-color="#7b5cff"></stop>
+                    <stop offset="0.50" stop-color="#c259ff"></stop>
+                    <stop offset="0.58" stop-color="#ff58e9"></stop>
+                    <stop offset="0.66" stop-color="#ff68c5"></stop>
+                    <stop offset="0.78" stop-color="#dea2c2"></stop>
+                    <stop offset="0.88" stop-color="#dea2c2"></stop>
+                    <stop offset="0.96" stop-color="#dea2c2"></stop>
+                    <stop offset="1" stop-color="#dea2c2" stop-opacity="0"></stop>
+                </linearGradient>
+                <linearGradient
+                        id="paint5_linear_3283_101175"
+                        x1="87.0001"
+                        y1="0"
+                        x2="87.0001"
+                        y2="478"
+                        gradientUnits="userSpaceOnUse"
+                >
+                    <stop stop-color="#2b0050"></stop>
+                    <stop offset="0.10" stop-color="#2b0050"></stop>
+                    <stop offset="0.18" stop-color="#2b0050"></stop>
+                    <stop offset="0.26" stop-color="#8a00ff"></stop>
+                    <stop offset="0.34" stop-color="#8a00ff"></stop>
+                    <stop offset="0.42" stop-color="#7b5cff"></stop>
+                    <stop offset="0.50" stop-color="#c259ff"></stop>
+                    <stop offset="0.58" stop-color="#ff58e9"></stop>
+                    <stop offset="0.66" stop-color="#ff68c5"></stop>
+                    <stop offset="0.78" stop-color="#dea2c2"></stop>
+                    <stop offset="0.88" stop-color="#dea2c2"></stop>
+                    <stop offset="0.96" stop-color="#dea2c2"></stop>
+                    <stop offset="1" stop-color="#dea2c2" stop-opacity="0"></stop>
+                </linearGradient>
+                <linearGradient
+                        id="paint6_linear_3283_101175"
+                        x1="87.5002"
+                        y1="0"
+                        x2="87.5002"
+                        y2="530"
+                        gradientUnits="userSpaceOnUse"
+                >
+                    <stop stop-color="#2b0050"></stop>
+                    <stop offset="0.10" stop-color="#2b0050"></stop>
+                    <stop offset="0.18" stop-color="#2b0050"></stop>
+                    <stop offset="0.26" stop-color="#8a00ff"></stop>
+                    <stop offset="0.34" stop-color="#8a00ff"></stop>
+                    <stop offset="0.42" stop-color="#7b5cff"></stop>
+                    <stop offset="0.50" stop-color="#c259ff"></stop>
+                    <stop offset="0.58" stop-color="#ff58e9"></stop>
+                    <stop offset="0.66" stop-color="#ff68c5"></stop>
+                    <stop offset="0.78" stop-color="#dea2c2"></stop>
+                    <stop offset="0.88" stop-color="#dea2c2"></stop>
+                    <stop offset="0.96" stop-color="#dea2c2"></stop>
+                    <stop offset="1" stop-color="#dea2c2" stop-opacity="0"></stop>
+                </linearGradient>
+                <linearGradient
+                        id="paint7_linear_3283_101175"
+                        x1="951.5"
+                        y1="614"
+                        x2="951.5"
+                        y2="1144"
+                        gradientUnits="userSpaceOnUse"
+                >
+                    <stop stop-color="#2b0050"></stop>
+                    <stop offset="0.10" stop-color="#2b0050"></stop>
+                    <stop offset="0.18" stop-color="#2b0050"></stop>
+                    <stop offset="0.26" stop-color="#8a00ff"></stop>
+                    <stop offset="0.34" stop-color="#8a00ff"></stop>
+                    <stop offset="0.42" stop-color="#7b5cff"></stop>
+                    <stop offset="0.50" stop-color="#c259ff"></stop>
+                    <stop offset="0.58" stop-color="#ff58e9"></stop>
+                    <stop offset="0.66" stop-color="#ff68c5"></stop>
+                    <stop offset="0.78" stop-color="#dea2c2"></stop>
+                    <stop offset="0.88" stop-color="#dea2c2"></stop>
+                    <stop offset="0.96" stop-color="#dea2c2"></stop>
+                    <stop offset="1" stop-color="#dea2c2" stop-opacity="0"></stop>
+                </linearGradient>
+                <linearGradient
+                        id="paint8_linear_3283_101175"
+                        x1="86.5002"
+                        y1="0"
+                        x2="86.5002"
+                        y2="584"
+                        gradientUnits="userSpaceOnUse"
+                >
+                    <stop stop-color="#2b0050"></stop>
+                    <stop offset="0.10" stop-color="#2b0050"></stop>
+                    <stop offset="0.18" stop-color="#2b0050"></stop>
+                    <stop offset="0.26" stop-color="#8a00ff"></stop>
+                    <stop offset="0.34" stop-color="#8a00ff"></stop>
+                    <stop offset="0.42" stop-color="#7b5cff"></stop>
+                    <stop offset="0.50" stop-color="#c259ff"></stop>
+                    <stop offset="0.58" stop-color="#ff58e9"></stop>
+                    <stop offset="0.66" stop-color="#ff68c5"></stop>
+                    <stop offset="0.78" stop-color="#dea2c2"></stop>
+                    <stop offset="0.88" stop-color="#dea2c2"></stop>
+                    <stop offset="0.96" stop-color="#dea2c2"></stop>
+                    <stop offset="1" stop-color="#dea2c2" stop-opacity="0"></stop>
+                </linearGradient>
+            </defs>
+        </svg>
+    </div>
+    <div class="footer-text">Long-Toolkit</div>
+</footer>
+
+</div>
+
+{% endblock %}
