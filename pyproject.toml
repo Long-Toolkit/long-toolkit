@@ -7,7 +7,7 @@ name = "long-toolkit"
 version = "0.0.4"
 description = "A hub of Python toolkits for longitudinal data, from preparation and preprocessing to benchmarking and modelling."
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<3.11"
 license = { file = "LICENSE" }
 authors = [
   { name = "Simon Provost", email = "simon.gilbert.provost@gmail.com" },
@@ -20,8 +20,6 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
@@ -29,7 +27,7 @@ dependencies = [
   "rich>=13.7.1",
   "rich-pyfiglet>=1.0.0",
   "numpy>=1.26.4",
-  "scipy>=1.11,<1.15; sys_platform == 'darwin' and python_version < '3.11'",
+  "scipy>=1.11,<1.15; sys_platform == 'darwin'",
   "pandas>=2.2.2",
   "PyYAML>=6.0.2",
   "scikit-learn>=1.4.2,<1.6",
@@ -57,17 +55,19 @@ override-dependencies = [
 
 [dependency-groups]
 dev = [
+  { include-group = "docs" },
   "pytest>=8.3",
   "black>=24.4.2",
   "flake8>=7.1.0",
   "pre-commit>=3.7.1",
   "ruff>=0.5.0",
-  "mkdocstrings[python]>=1.0.4",
-  "mkdocstrings-python>=2.0.3",
-  "zensical>=0.0.61",
-  # mkdocstrings 1.0.7 (needed by pymdown-extensions 12) requires Python 3.11+.
-  "pymdown-extensions<12; python_version < '3.11'",
-  "tomli>=2.0; python_version < '3.11'",
+]
+docs = [
+  "mkdocstrings[python]==1.0.6",
+  "mkdocstrings-python==2.0.3",
+  "zensical==0.0.67",
+  "pymdown-extensions==11.0.2",
+  "tomli==2.4.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -82,11 +82,11 @@ include = ["long_toolkit", "long_toolkit.*"]
 
 [tool.black]
 line-length = 88
-target-version = ["py311"]
+target-version = ["py310"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["B", "E", "F", "I", "UP", "W"]
