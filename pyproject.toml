@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "long-toolkit"
-version = "0.0.4"
+version = "0.0.5"
 description = "A hub of Python toolkits for longitudinal data, from preparation and preprocessing to benchmarking and modelling."
 readme = "README.md"
 requires-python = ">=3.10,<3.11"

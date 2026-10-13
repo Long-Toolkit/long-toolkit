@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this repository, please cite it as below."
 title: "Long-Toolkit: A Hub of Python Toolkits for Longitudinal Data"
 type: software
-version: "0.0.4"
+version: "0.0.5"
 year: 2026
 repository-code: "https://github.com/Long-Toolkit/long-toolkit"
 url: "https://long-toolkit.readthedocs.io/"
