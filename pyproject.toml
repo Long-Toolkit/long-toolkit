@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10,<3.11"
 license = { file = "LICENSE" }
 authors = [
-  { name = "Simon Provost", email = "simon.gilbert.provost@gmail.com" },
+  { name = "Simon Provost", email = "simon.g.provost@mcgill.ca" },
   { name = "Bianca Branco", email = "s2714881@sms.ed.ac.uk" },
   { name = "Alex Kwong", email = "akwong@ed.ac.uk" },
 ]
