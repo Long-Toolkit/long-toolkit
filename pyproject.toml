@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ldt-toolkit"
+name = "long-toolkit"
 version = "0.0.4"
-description = "Python library for longitudinal depression trajectories workflows."
+description = "A hub of Python toolkits for longitudinal data, from preparation and preprocessing to benchmarking and modelling."
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 license = { file = "LICENSE" }
@@ -31,10 +31,7 @@ dependencies = [
   "numpy>=1.26.4",
   "pandas>=2.2.2",
   "PyYAML>=6.0.2",
-  "plotly>=5.24.1",
   "scikit-learn>=1.4.2,<1.6",
-  "scikit-longitudinal>=0.1.8",
-  "tslearn>=0.7.0",
   "terminaltexteffects>=0.14.2",
   "skrub==0.6.2",
   "miceforest>=6.0.5",
@@ -43,10 +40,13 @@ dependencies = [
   "pipelineprofiler>=0.1.18",
   "setuptools<81",
   "imbalanced-learn==0.12.4",
+  "optuna>=4.2,<5",
+  "xgboost>=2.1,<3",
+  "scikit-longitudinal>=0.1.10",
 ]
 
 [project.scripts]
-ldt-bridge = "ldt.bridge.runner:main"
+long-toolkit-bridge = "long_toolkit.bridge.runner:main"
 
 [tool.uv]
 default-groups = ["dev"]
@@ -60,45 +60,23 @@ dev = [
   "flake8>=7.1.0",
   "pre-commit>=3.7.1",
   "ruff>=0.5.0",
-  "markdown-callouts>=0.4",
-  "markdown-exec>=1.8",
-  "mkdocs>=1.6",
-  "mkdocs-abs-rel-plugin>=0.2.4",
-  "mkdocs-autorefs>=1.4",
-  "mkdocs-coverage>=1.0",
-  "mkdocs-document-dates>=3.1.5",
-  "mkdocs-gen-files>=0.5",
-  "mkdocs-git-revision-date-localized-plugin>=1.2",
-  "mkdocs-jupyter>=0.25.1",
-  "mkdocs-literate-nav>=0.6",
-  "mkdocs-macros-plugin>=1.3.7",
-  "mkdocs-material[emoji,imaging]>=9.6.11",
-  "mkdocs-mermaid2-plugin>=1.2.1",
-  "mkdocs-minify-plugin>=0.8",
-  "mkdocstrings[python]>=0.25",
-  "mkdocstrings-python>=1.16.10",
-  "pymdown-extensions>=10.14.3",
+  "mkdocstrings[python]>=1.0.4",
+  "mkdocstrings-python>=2.0.3",
+  "zensical>=0.0.61",
+  # mkdocstrings 1.0.7 (needed by pymdown-extensions 12) requires Python 3.11+.
+  "pymdown-extensions<12; python_version < '3.11'",
   "tomli>=2.0; python_version < '3.11'",
-  "mkdocs-copy-to-llm>=0.2.9",
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["ldt", "ldt.*"]
+include = ["long_toolkit", "long_toolkit.*"]
 
 [tool.setuptools.package-data]
-"ldt.data_preprocessing.tools.build_trajectories.trajectories.lcga" = ["*.R"]
-"ldt.data_preprocessing.tools.build_trajectories.trajectories.gmm" = ["*.R"]
-"ldt.data_preparation.config" = ["*.json"]
-"ldt.data_preparation.presets.prepare_mcs_by_leap" = [
-  "defaults.yaml",
-  "stage_1_wave_paths/*.yaml",
-  "stage_2_subjects/*.yaml",
-  "stage_3_features/*.yaml",
-  "stage_4_composites/*.yaml",
-]
-"ldt.data_preprocessing.config" = ["*.json"]
-"ldt.machine_learning.config" = ["*.json"]
+"long_toolkit.data_preparation.config" = ["*.json"]
+"long_toolkit.data_preprocessing.config" = ["*.json"]
+"long_toolkit.explainability.config" = ["*.json"]
+"long_toolkit.machine_learning.config" = ["*.json"]
 
 [tool.black]
 line-length = 88

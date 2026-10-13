@@ -1,0 +1,72 @@
+{
+  "shap_analysis": {
+    "techniques": [
+      {
+        "id": "run_analysis",
+        "name": "Run SHAP Analysis",
+        "description": "Generate SHAP explainability figures and summary artefacts.",
+        "parameters": [
+          {
+            "key": "model_path",
+            "label": "Saved model artefact path (.pkl)",
+            "type": "path",
+            "required": true
+          },
+          {
+            "key": "input_path",
+            "label": "Input CSV path",
+            "type": "path",
+            "required": true
+          },
+          {
+            "key": "target_column",
+            "label": "Target column to exclude",
+            "type": "string",
+            "required": false,
+            "default": "none",
+            "hint": "Use `none` to keep all columns as SHAP features."
+          },
+          {
+            "key": "feature_columns",
+            "label": "Feature columns",
+            "type": "string",
+            "required": true,
+            "default": "auto",
+            "hint": "Comma-separated list or `auto`."
+          },
+          {
+            "key": "max_rows_to_explain",
+            "label": "Maximum rows to explain",
+            "type": "int",
+            "required": true,
+            "default": 200,
+            "min": 1
+          },
+          {
+            "key": "background_rows",
+            "label": "Background rows",
+            "type": "int",
+            "required": true,
+            "default": 100,
+            "min": 1
+          },
+          {
+            "key": "class_index",
+            "label": "Class index",
+            "type": "string",
+            "required": false,
+            "default": "auto",
+            "hint": "Use `auto` for binary/default class handling."
+          },
+          {
+            "key": "output_dir",
+            "label": "Output directory",
+            "type": "path",
+            "required": false,
+            "hint": "Defaults to <model_stem>_shap_analysis near the model."
+          }
+        ]
+      }
+    ]
+  }
+}
