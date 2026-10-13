@@ -1,0 +1,78 @@
+name: "💡 Feature Request: Explainability"
+description: Propose an explainability feature, such as a new explanation method, plot or report for saved models.
+title: "💡 [FEAT][EXPLAINABILITY] - <title>"
+labels:
+  - "feature"
+  - "stage:explainability"
+assignees:
+  - "simonprovost"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for **explainability** requests (Stage D):
+        explanation methods, plots and reports for models saved by the benchmarking and modelling tools.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: "Before Submitting"
+      options:
+        - label: I have reviewed the existing `explainability.*` capabilities (e.g., `SHAPAnalysis`).
+          required: true
+        - label: I can describe which models the explanation should support, and on which data.
+          required: true
+  - type: dropdown
+    id: user-persona
+    attributes:
+      label: "User Persona"
+      options:
+        - "Clinical/epidemiology researcher"
+        - "ML practitioner"
+        - "Methods developer"
+        - "Other"
+    validations:
+      required: true
+  - type: dropdown
+    id: explanation-type
+    attributes:
+      label: "Explanation Type"
+      options:
+        - "Global feature importance"
+        - "Local (per-participant) explanation"
+        - "Temporal (per-wave) explanation"
+        - "Plot or report of an existing method"
+        - "Other"
+    validations:
+      required: true
+  - type: textarea
+    id: method-proposal
+    attributes:
+      label: "Method Proposal"
+      description: Describe the explanation method, with a reference (paper or library) if available.
+      placeholder: "Example: aggregate SHAP values per feature group across waves."
+    validations:
+      required: true
+  - type: textarea
+    id: model-scope
+    attributes:
+      label: "Model Scope"
+      description: Which saved models should be supported (standard, longitudinal, or both)?
+      placeholder: "List the estimator keys or families of interest."
+    validations:
+      required: true
+  - type: textarea
+    id: expected-outputs
+    attributes:
+      label: "Expected Outputs"
+      description: Which artefacts should the tool write (tables, plots, reports)?
+      placeholder: "Example: a CSV of importances per wave and one summary plot."
+    validations:
+      required: true
+  - type: textarea
+    id: caveats
+    attributes:
+      label: "Interpretation Caveats"
+      description: Any known limitation of the method (e.g., correlated features) that the documentation should state.
+      placeholder: "Optional."
+    validations:
+      required: false

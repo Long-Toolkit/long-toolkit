@@ -1,5 +1,5 @@
 name: "❓ Ask a Question"
-description: Ask a question about the Longitudinal Depression Trajectories Toolkit.
+description: Ask a question about Long-Toolkit.
 title: "❓ [QUESTION] - <title>"
 labels:
   - "question"
@@ -12,16 +12,16 @@ body:
         <div align="center">
            <h1 align="center">
               <br>
-              <img src="https://raw.githubusercontent.com/OWNER/REPO/main/public/logo/logo.png" alt="Longitudinal Depression Trajectories Toolkit" width="200">
+              <img src="https://raw.githubusercontent.com/Long-Toolkit/long-toolkit/main/public/logo/logo.png" alt="Long-Toolkit" width="200">
               <br>
-              Longitudinal Depression Trajectories Toolkit
+              Long-Toolkit
               <br>
            </h1>
            <h4 align="center">
-              Toolkit for Longitudinal Depression Trajectories Studies
+              A Hub of Python Toolkits for Longitudinal Data
               <br>
-              Millennium Cohort Study (MCS) as Proof-of-Concept —
-              <a href="https://github.com">Documentation</a>
+              From Data Preparation to Benchmarking ·
+              <a href="https://long-toolkit.readthedocs.io/en/latest/">Documentation</a>
            </h4>
         </div>
 
@@ -38,9 +38,9 @@ body:
       label: "Before Submitting"
       description: Please confirm the following to help us answer your question efficiently.
       options:
-        - label: I have read the project's README.md and run `uv run ldt-toolkit --help`.
+        - label: I have read the project's README.md and the documentation.
           required: true
-        - label: I have run `uv run ldt-toolkit --help` and reviewed the CLI namespaces.
+        - label: I have browsed the tools available in the `long-toolkit` CLI (or the API reference).
           required: true
         - label: I have searched through the existing GitHub issues to check if my question has been asked before.
           required: true

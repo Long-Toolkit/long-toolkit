@@ -1,5 +1,5 @@
-name: "💡 Feature Request: Machine Learning"
-description: Propose a machine-learning feature for modeling, validation, interpretation, or reporting.
+name: "💡 Feature Request: Benchmarking and Modelling"
+description: Propose a benchmarking or modelling feature, such as an estimator, an evaluation protocol or a report.
 title: "💡 [FEAT][MACHINE_LEARNING] - <title>"
 labels:
   - "feature"
@@ -10,8 +10,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this form for **machine-learning stage** requests:
-        estimators, evaluation protocols, explainability, and reporting workflows.
+        Use this form for **benchmarking and modelling** requests (Stage C):
+        estimators (including deep learning for longitudinal data), evaluation protocols, benchmarks, and reporting workflows.
+        Explainability requests have their own form.
   - type: checkboxes
     id: checks
     attributes:
@@ -40,8 +41,8 @@ body:
         - "Classification"
         - "Regression"
         - "Time-to-event / survival"
-        - "Model interpretation / explainability"
         - "Benchmarking / model selection"
+        - "Deep learning for longitudinal data"
     validations:
       required: true
   - type: textarea
@@ -56,7 +57,7 @@ body:
     id: feature-scope
     attributes:
       label: "Feature Scope"
-      description: Which features should be consumed (raw, engineered, trajectories, metadata)?
+      description: Which features should be consumed (raw, engineered, wave-specific, metadata)?
       placeholder: "List key feature groups and constraints."
     validations:
       required: true
@@ -79,8 +80,8 @@ body:
   - type: textarea
     id: interpretation-reporting
     attributes:
-      label: "Interpretation & Reporting Needs"
-      description: What model cards, diagnostics, or explainability outputs are required?
+      label: "Reporting Needs"
+      description: What model cards, diagnostics, or reports are required?
       placeholder: "Optional."
     validations:
       required: false

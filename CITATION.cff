@@ -1,9 +1,11 @@
 cff-version: 1.2.0
 message: "If you use this repository, please cite it as below."
-title: "Longitudinal Depression Trajectories Toolkit: Machine Learning for Longitudinal Studies"
+title: "Long-Toolkit: A Hub of Python Toolkits for Longitudinal Data"
 type: software
 version: "0.0.4"
 year: 2026
+repository-code: "https://github.com/Long-Toolkit/long-toolkit"
+url: "https://long-toolkit.readthedocs.io/"
 authors:
   - family-names: Provost
     given-names: Simon
@@ -11,6 +13,10 @@ authors:
   - family-names: Branco
     given-names: Bianca
     email: s2714881@sms.ed.ac.uk
+  - family-names: Chen
+    given-names: Honghui
+  - family-names: Tassella
+    given-names: Isaac
   - family-names: Kwong
     given-names: Alex
     email: akwong@ed.ac.uk

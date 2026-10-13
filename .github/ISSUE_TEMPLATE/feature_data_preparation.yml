@@ -1,5 +1,5 @@
 name: "💡 Feature Request: Data Preparation"
-description: Propose a feature for cohort ingestion, conversion, synthetic generation, or preparation presets.
+description: Propose a feature for cohort ingestion, conversion, or synthetic generation.
 title: "💡 [FEAT][DATA_PREPARATION] - <title>"
 labels:
   - "feature"
@@ -11,7 +11,7 @@ body:
     attributes:
       value: |
         Use this form for **raw-data preparation** work:
-        source conversion, synthetic longitudinal generation, and preparation presets.
+        source conversion and synthetic longitudinal generation.
   - type: checkboxes
     id: checks
     attributes:
@@ -19,8 +19,6 @@ body:
       description: Confirm these checks so we can scope the request quickly.
       options:
         - label: I have checked existing `data_preparation.*` operations/catalog entries.
-          required: true
-        - label: I have identified whether this belongs to Playground (tool) or Presets (reproducible workflow).
           required: true
   - type: dropdown
     id: requester-role
@@ -41,7 +39,6 @@ body:
       options:
         - "New data conversion pathway"
         - "New synthetic data generation mode"
-        - "New/updated preparation preset"
         - "Data quality or validation gate"
     validations:
       required: true
@@ -50,21 +47,21 @@ body:
     attributes:
       label: "Study Context"
       description: Which study/cohort and which waves or collection years are involved?
-      placeholder: "Example: MCS, sweeps 2-7, depressive symptoms + demographics."
+      placeholder: "Example: a birth cohort, sweeps 2 to 7, mood scores and demographics."
     validations:
       required: true
   - type: textarea
-    id: raw-input-contract
+    id: raw-input-format
     attributes:
-      label: "Current Input Contract"
+      label: "Current Input Format"
       description: Describe current input files, expected columns, encodings, and known quirks.
-      placeholder: "Example: SPSS `.sav` files, one file per sweep, participant key = `MCSID`."
+      placeholder: "Example: SPSS `.sav` files, one file per sweep, participant key = `subject_id`."
     validations:
       required: true
   - type: textarea
-    id: target-output-contract
+    id: target-output-format
     attributes:
-      label: "Target Output Contract"
+      label: "Target Output Format"
       description: Describe the expected output artifact and schema.
       placeholder: "Example: one harmonised long CSV with standard wave/value columns."
     validations:

@@ -1,5 +1,5 @@
 name: "🐛 Bug Report"
-description: Create a report to help us improve the Longitudinal Depression Trajectories Toolkit.
+description: Create a report to help us improve Long-Toolkit.
 title: "🐛 [BUG] - <title>"
 labels:
   - "bug"
@@ -12,16 +12,16 @@ body:
         <div align="center">
            <h1 align="center">
               <br>
-              <img src="https://raw.githubusercontent.com/OWNER/REPO/main/public/logo/logo.png" alt="Longitudinal Depression Trajectories Toolkit" width="200">
+              <img src="https://raw.githubusercontent.com/Long-Toolkit/long-toolkit/main/public/logo/logo.png" alt="Long-Toolkit" width="200">
               <br>
-              Longitudinal Depression Trajectories Toolkit
+              Long-Toolkit
               <br>
            </h1>
            <h4 align="center">
-              Toolkit for Longitudinal Depression Trajectories Studies
+              A Hub of Python Toolkits for Longitudinal Data
               <br>
-              Millennium Cohort Study (MCS) as Proof-of-Concept —
-              <a href="https://github.com">Documentation</a>
+              From Data Preparation to Benchmarking ·
+              <a href="https://long-toolkit.readthedocs.io/en/latest/">Documentation</a>
            </h4>
         </div>
 
@@ -40,7 +40,7 @@ body:
       options:
         - label: I have tried the project on MacOS or Linux (Windows is not fully tested).
           required: true
-        - label: I have reproduced this with the current CLI entrypoint (`uv run ldt-toolkit --help`).
+        - label: I have reproduced this with the latest `long-toolkit` Python package (and the latest `long-toolkit` CLI, if the CLI is involved).
           required: false
         - label: I have checked the documentation and existing issues.
           required: true
