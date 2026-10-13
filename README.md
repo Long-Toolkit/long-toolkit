@@ -64,6 +64,15 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ### <img src="public/icons/lucide/tally-1.svg" width="28" alt="" /> Install `long-toolkit` ([PyPI Index](https://pypi.org/project/long-toolkit/))
 
+Use Python `3.10` for now: it is the validated installation, while a longitudinal dependency currently fails to build from source on Python `3.11`.
+
+Before installing, add the following to your project's `pyproject.toml`. Scikit-Longitudinal supplies `sklearn` through its lexicographical fork, so the stock package must be excluded, as described in its [installation guide](https://scikit-longitudinal.readthedocs.io/latest/getting-started/).
+
+```toml
+[tool.uv]
+override-dependencies = ["scikit-learn ; sys_platform == 'never'"]
+```
+
 ```bash
 uv add long-toolkit
 # We recommend uv as the Python package manager

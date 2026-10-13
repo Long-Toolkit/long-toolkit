@@ -71,13 +71,24 @@ The Python package requires Python `3.10` to `3.12` (installed directly, or mana
 
 ### Python Package
 
+Use Python `3.10` for the validated installation. A longitudinal dependency currently fails to build from source on Python `3.11`; Python `3.12` has not yet been validated.
+
 === "uv (recommended)"
+
+    Before installing, add this to your project's `pyproject.toml`, following [Scikit-Longitudinal's installation guidance](https://scikit-longitudinal.readthedocs.io/latest/getting-started/). Its lexicographical fork provides the `sklearn` import namespace, so the stock package must be excluded.
+
+    ```toml
+    [tool.uv]
+    override-dependencies = ["scikit-learn ; sys_platform == 'never'"]
+    ```
 
     ```bash
     uv add long-toolkit
     ```
 
 === "pip"
+
+    Use a separate environment for the toolkit. Stock `scikit-learn` and the lexicographical fork share an import namespace; follow the upstream installation guidance above to avoid conflicts. The uv installation is the validated route.
 
     ```bash
     pip install long-toolkit
