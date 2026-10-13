@@ -16,6 +16,8 @@ Third, the hub explains the results. The ranking shows whether, and by how much,
 
 ## Motivation
 
+Simon Provost's current affiliation is **Postdoctoral Research @ McGill University (MEDomicsLab)**. Contact him at [simon.g.provost@mcgill.ca](mailto:simon.g.provost@mcgill.ca).
+
 During Simon Provost's internship at the University of Edinburgh, in the [LEAP lab](https://life-epi-psych.github.io) supervised by Dr Alex Kwong, we ([Simon Provost](https://simonprovost.xyz/) and [Dr Alex Kwong](https://edwebprofiles.ed.ac.uk/profile/dr-alex-kwong)) noticed a recurring pattern in longitudinal studies. Considerable effort goes into data collection and curation, whereas machine learning is either left aside, since its barrier to entry is high, or approached naively.
 
 In the first case, studies keep to statistical techniques, which have been well established and stable over the years. Machine learning has, however, proven its value empirically in other fields; hence, it is worth benchmarking it on longitudinal studies too, e.g., in epidemiology or oncology. In the second case, machine learning is applied without regard for the temporal dependency of the data. Conventional machine learning treats the same feature collected at several waves for each participant (e.g., a mood score at ages 11, 14 and 17) as distinct, unrelated features, which does not reflect how such data arise in the real world; hence, longitudinal-data-aware machine learning, which models these repeated measures as one variable over time, should also be explored.

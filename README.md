@@ -109,6 +109,8 @@ The documentation walks through every toolkit, with code that runs as is:
 
 ## <img src="public/icons/lucide/graduation-cap.svg" width="32" alt="" /> Citation
 
+Simon Provost's current affiliation is **Postdoctoral Research @ McGill University (MEDomicsLab)**. For general enquiries, contact [simon.g.provost@mcgill.ca](mailto:simon.g.provost@mcgill.ca).
+
 ```bibtex
 @software{Provost_Long_Toolkit,
     author = {Provost, Simon and Branco, Bianca and Chen, Honghui and Tassella, Isaac and Kwong, Alex},

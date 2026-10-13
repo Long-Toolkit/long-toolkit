@@ -1,14 +1,14 @@
 [project]
 site_name = "Long-Toolkit"
 site_url = "https://long-toolkit.readthedocs.io/"
-site_author = "Simon Provost"
+site_author = "Simon Provost, Postdoctoral Research @ McGill University (MEDomicsLab)"
 site_description = """
 Long-Toolkit is a hub of Python toolkits for longitudinal data, from data
 preparation and preprocessing to benchmarking and modelling, with a no-code
 terminal interface.
 """
 copyright = """
-Maintained by Simon Provost &copy; Long-Toolkit contributors, 2026-present
+Maintained by Simon Provost, Postdoctoral Research @ McGill University (MEDomicsLab). &copy; Long-Toolkit contributors, 2026-present
 """
 repo_url = "https://github.com/Long-Toolkit/long-toolkit"
 repo_name = "Long-Toolkit/long-toolkit"
